@@ -38,11 +38,14 @@ uint8_t lecture_joytick(const uint8_t pin, uint8_t resolution, uint8_t mesure)
 void loop() 
 {
   mesure_axe_X = analogRead(pin_X_axes);
-  switch (lecture_joytick(pin_X_axes, resolution_ADC, mesure_axe_X)) 
+  Serial.println(mesure_axe_X);
+  if (mesure_axe_X > 1024*0.75) Serial.println("++");
+  if (mesure_axe_X < 1024*0.25) Serial.println("--");
+  /*switch (lecture_joytick(pin_X_axes, resolution_ADC, mesure_axe_X)) 
   {
   case 1:Serial.println("++");   break;
   case 2:Serial.println("--");   break;
   default: Serial.println("rien");  break;
-  }
+  }*/
   delay(20);
 }
