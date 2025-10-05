@@ -12,7 +12,7 @@ une fois le servo moteur dans le bon angle pendant un certain temps, le servo se
 #include <math.h>
 #include <Servo.h>
 Servo Servomoteur1;
-const uint8_t pin_servo = 9, pin_RED, pin_GREEN, pin_SWITCH = A2, pin_Y_axes = A0, pin_X_axes = A1, resolution_ADC = 10;
+const uint8_t pin_servo = 9, pin_RED, pin_GREEN, pin_SWITCH = A2, pin_Y_axes = A0, pin_X_axes = A1, resolution_ADC = 10, pin_ANGLE effectif = A3;
 
 long angle_random;//j'ai suivi la documentation mais je ne m'etais pas intereser plus que ca a son utilite, il est vrai que ce n'est pas du tout pertinnet de l'utiliser ici, on peu la changer en un truc comme 8bit ou byte, si je ne me trompe pas
 volatile bool initPartie = false;
@@ -31,9 +31,15 @@ void setup()
 
   Servomoteur1.attach(pin_servo);
   Servomoteur1.write(0);
-  attachInterrupt(digitalPinToInterrupt(pin_SWITCH, BoutonInit, LOW));
+  attachInterrupt(digitalPinToInterrupt(pin_SWITCH, init, LOW));
 }
 
+uint8_t lecture_angle(const uint8_t pin_servo_angle)//0.25V = 0°  || 0.5V = 180°
+{
+  uint16_t val_num = analogRead(pin_servo_angle);
+  float angle_effectif = 
+
+}
 uint8_t lecture_joytick(const uint8_t pin, uint8_t resolution, uint8_t mesure)//cette fonction est faite pour lire le joystick et renvoyer une valeur quand le joystick est trop penché (d'un coté comme de l'autre) 
 {
   uint8_t limite_sup, limite_inf;
@@ -78,10 +84,10 @@ mais il nous faudras quand meme un interupt pour arreter le jeu avec un clic lon
 */
 
 
-void init()
+void init(void)
 {
   angle_random = random(181); //generation d'un nombre entre 0 et 180 (0 et max-1)
-  servoMoteur(90);
+  Servomoteur1.write(0);
   digitalWrite(pin_GREEN, 1);
 }
 
