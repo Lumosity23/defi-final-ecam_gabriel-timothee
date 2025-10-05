@@ -14,7 +14,7 @@ une fois le servo moteur dans le bon angle pendant un certain temps, le servo se
 Servo Servomoteur1;
 const uint8_t pin_servo = 9, pin_RED, pin_GREEN, pin_SWITCH = A2, pin_Y_axes = A0, pin_X_axes = A1, resolution_ADC = 10;
 
-long angle_random;//pk un long
+long angle_random;//j'ai suivi la documentation mais je ne m'etais pas intereser plus que ca a son utilite, il est vrai que ce n'est pas du tout pertinnet de l'utiliser ici, on peu la changer en un truc comme 8bit ou byte, si je ne me trompe pas
 volatile bool initPartie = false;
 uint16_t mesure_axe_X = 0;
 
@@ -64,22 +64,29 @@ void loop()
   default: Serial.println("rien");  break;
   }*/
 
-  if (initPartie) {
+  if (initPartie) { // ceci reagit a l'interuption et appel la fonction init
     initPartie = false;   // on remet à false l'initialisation
     init(); // on exécute la fonction init()
   }
   delay(20);
 }
 
-void init()//pourquoi faire une fonction init ?
+/* 
+la fonction init est la pour demarer un partie, elle est appeler de manier indirect par l'interuption via le if dans le loop.
+apres reflection je pense que si on automatise le redemarage de la partie alors on peus simplement fair eun un if bloquant qui permet de lancer la prtie au debut avec le bouton,
+mais il nous faudras quand meme un interupt pour arreter le jeu avec un clic long
+*/
+
+
+void init()
 {
-  angle_random = random(181); //reneration d'un nombre entre 0 et 180 (0 et max-1)
+  angle_random = random(181); //generation d'un nombre entre 0 et 180 (0 et max-1)
   servoMoteur(90);
   digitalWrite(pin_GREEN, 1);
 }
 
 
-void servoMoteur(int angleServo)//on va faire la librairie plus tard, voir ne pas la faire car il faut une interruption timer
+void servoMoteur(int angleServo)//et c'est chiant a faire un interup timer ?
 {
   u_int32_t times_ms;
   u_int32_t temps;
