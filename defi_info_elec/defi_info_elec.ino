@@ -12,7 +12,7 @@ une fois le servo moteur dans le bon angle pendant un certain temps, le servo se
 #include <math.h>
 #include <Servo.h>
 Servo Servomoteur1;
-const uint8_t pin_servo = 9, pin_RED, pin_GREEN, pin_SWITCH = A2, pin_Y_axes = A0, pin_X_axes = A1, resolution_ADC = 10, pin_ANGLE effectif = A3;
+const uint8_t pin_servo = 9, pin_RED, pin_GREEN, pin_BLUE, pin_SWITCH = A2, pin_Y_axes = A0, pin_X_axes = A1, resolution_ADC = 10, pin_ANGLE effectif = A3;
 
 uint8_t erreur = 0;
 long angle_random;//j'ai suivi la documentation mais je ne m'etais pas intereser plus que ca a son utilite, il est vrai que ce n'est pas du tout pertinnet de l'utiliser ici, on peu la changer en un truc comme 8bit ou byte, si je ne me trompe pas
@@ -20,19 +20,38 @@ volatile bool initPartie = false;
 uint16_t mesure_axe_X = 0;
 unsigned long times_ms = 0;
 
-void commande_LED(uint8_t etatat)
+
+// Fonction pour éteindre toutes les couleurs de la LED
+void allumer_off_LED_PWM() 
 {
+  analogWrite(pin_RED, 255);   // Éteint le rouge (pour anode commune, 255 = éteint)
+  analogWrite(pin_GREEN, 255); // Éteint le vert
+  analogWrite(pin_BLUE, 255);  // Éteint le bleu
+}
+
+// Fonction pour définir la couleur de la LED en fonction d'un état avec PWM
+void commande_LED_PWM(uint8_t etatat)
+{
+  allumer_off_LED_PWM(); // Éteint d'abord toutes les couleurs
+
   switch(etatat)
   {
-    case 1 :digitalWrite(pin_GREEN, 1); digitalWrite(pin_GREEN, 1); digitalWrite(pin_BLUE, 1);    break;//debut de partie
+    case 0: allumer_off_LED_PWM(); break; // LED éteinte
 
-    case 2 :    break;//on se rapproche
+    case 1: analogWrite(pin_RED, 0); break; // Rouge
 
-    case 3 :    break;//on s'éloigne
+    case 2: analogWrite(pin_RED, 0); analogWrite(pin_GREEN, 127); break; // Orange
 
-    case 4 :    break;//fin de partie
+    case 3: analogWrite(pin_RED, 0); analogWrite(pin_GREEN, 0); break; // Jaune
+
+    case 4: analogWrite(pin_GREEN, 0); break; // Vert
+
+    case 5: analogWrite(pin_BLUE, 0); break; // Bleu
+
+    case 6: analogWrite(pin_RED, 0); analogWrite(pin_GREEN, 0); analogWrite(pin_BLUE, 0); break; // Blanc
   }
 }
+
 void setup() 
 {
   Serial.begin(115200);
