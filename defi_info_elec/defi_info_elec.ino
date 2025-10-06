@@ -14,11 +14,25 @@ une fois le servo moteur dans le bon angle pendant un certain temps, le servo se
 Servo Servomoteur1;
 const uint8_t pin_servo = 9, pin_RED, pin_GREEN, pin_SWITCH = A2, pin_Y_axes = A0, pin_X_axes = A1, resolution_ADC = 10, pin_ANGLE effectif = A3;
 
+uint8_t erreur = 0;
 long angle_random;//j'ai suivi la documentation mais je ne m'etais pas intereser plus que ca a son utilite, il est vrai que ce n'est pas du tout pertinnet de l'utiliser ici, on peu la changer en un truc comme 8bit ou byte, si je ne me trompe pas
 volatile bool initPartie = false;
 uint16_t mesure_axe_X = 0;
+unsigned long times_ms = 0;
 
+void commande_LED(uint8_t etatat)
+{
+  switch(etatat)
+  {
+    case 1 :digitalWrite(pin_GREEN, 1); digitalWrite(pin_GREEN, 1); digitalWrite(pin_BLUE, 1);    break;//debut de partie
 
+    case 2 :    break;//on se rapproche
+
+    case 3 :    break;//on s'éloigne
+
+    case 4 :    break;//fin de partie
+  }
+}
 void setup() 
 {
   Serial.begin(115200);
@@ -32,6 +46,7 @@ void setup()
   Servomoteur1.attach(pin_servo);
   Servomoteur1.write(0);
   attachInterrupt(digitalPinToInterrupt(pin_SWITCH, init, LOW));
+  times_ms = millis();
 }
 
 uint8_t lecture_angle(const uint8_t pin_servo_angle)//0.25V = 0°  || 0.5V = 180°
@@ -59,22 +74,41 @@ uint8_t lecture_joytick(const uint8_t pin, uint8_t resolution, uint8_t mesure)//
 
 void loop() 
 {
-  mesure_axe_X = analogRead(pin_X_axes);
-  Serial.println(mesure_axe_X);
-  if (mesure_axe_X > 1024*0.75) Serial.println("++");
-  if (mesure_axe_X < 1024*0.25) Serial.println("--");
-  /*switch (lecture_joytick(pin_X_axes, resolution_ADC, mesure_axe_X)) 
-  {
-  case 1:Serial.println("++");   break;
-  case 2:Serial.println("--");   break;
-  default: Serial.println("rien");  break;
-  }*/
-
   if (initPartie) { // ceci reagit a l'interuption et appel la fonction init
     initPartie = false;   // on remet à false l'initialisation
     init(); // on exécute la fonction init()
   }
-  delay(20);
+  if (millis() >= times_ms + 20)
+  {
+    mesure_axe_X = analogRead(pin_X_axes);
+ /* Serial.println(mesure_axe_X);
+  if (mesure_axe_X > 1024*0.75) Serial.println("++");
+  if (mesure_axe_X < 1024*0.25) Serial.println("--");*/
+
+  erreur = angle_random - angle_effectif;
+
+  if (abs(erreur) >= 10)
+  {
+    analogWrite(pin_RED, erreur);
+    digitalWrite(pin_GREEN, 0);
+    digitalWrite(pin_BLUE, 0);
+  } 
+  if (abs(erreur) <= 10)
+  {
+    analogWrite(pin_GREEN, erreur);
+    digitalWrite(pin_RED, 0);
+    digitalWrite(pin_BLUE, 0);
+  }
+
+  switch (lecture_joytick(pin_X_axes, resolution_ADC, mesure_axe_X)) 
+  {
+  case 1:Serial.println("++");   break;
+  case 2:Serial.println("--");   break;
+  default: Serial.println("rien");  break;
+  }
+
+  }
+  //delay(20);
 }
 
 /* 
@@ -89,6 +123,7 @@ void init(void)
   angle_random = random(181); //generation d'un nombre entre 0 et 180 (0 et max-1)
   Servomoteur1.write(0);
   digitalWrite(pin_GREEN, 1);
+  initPartie = 1;
 }
 
 
