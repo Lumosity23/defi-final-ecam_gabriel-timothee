@@ -49,10 +49,10 @@ void setup()
   times_ms = millis();
 }
 
-uint8_t lecture_angle(const uint8_t pin_servo_angle)//0.25V = 0°  || 0.5V = 180°
-{
+uint8_t lecture_angle(const uint8_t pin_servo_angle)
+{//angle = tension / (fond d'échelle/angle_max) formule par Timothée le goat des maths plus fort que nguyen
   uint16_t val_num = analogRead(pin_servo_angle);
-  float angle_effectif = 
+  float angle_effectif = (val_num * (3.3/1024))/(1024/270);
 
 }
 uint8_t lecture_joytick(const uint8_t pin, uint8_t resolution, uint8_t mesure)//cette fonction est faite pour lire le joystick et renvoyer une valeur quand le joystick est trop penché (d'un coté comme de l'autre) 
