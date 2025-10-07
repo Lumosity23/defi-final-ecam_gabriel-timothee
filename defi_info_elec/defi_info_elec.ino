@@ -12,13 +12,14 @@ une fois le servo moteur dans le bon angle pendant un certain temps, le servo se
 #include <math.h>
 #include <Servo.h>
 Servo Servomoteur1;
-const uint8_t pin_servo = 9, pin_RED, pin_GREEN, pin_BLUE, pin_SWITCH = A2, pin_Y_axes = A0, pin_X_axes = A1, resolution_ADC = 10, pin_ANGLE_effectif = A3;
+const uint8_t pin_servo = 9, pin_RED, pin_GREEN, pin_BLUE, pin_SWITCH = A2, pin_Y_axes = A0, pin_X_axes = A1, resolution_ADC = 10, pin_ANGLE_effectif = A3, angle_max_potentiometre = 270;
 
 uint8_t erreur = 0;
 uint8_t angle_random;
 volatile bool initPartie = false;
 uint16_t mesure_axe_X = 0;
 unsigned long times_ms = 0;
+float angle_effectif;
 
 /*
 pin servo : PB1
@@ -37,8 +38,6 @@ void setup()
   pinMode(pin_X_axes, INPUT);
   pinMode(pin_Y_axes, INPUT);
 
-  PORTC =|  0b01000000;
-
   pinMode(pin_BLUE, OUTPUT);
   pinMode(pin_GREEN, OUTPUT);
   pinMode(pin_RED, OUTPUT);
@@ -52,17 +51,11 @@ void setup()
 
 void loop() 
 {
-  if (initPartie) { // ceci reagit a l'interuption et appel la fonction init
+  if (initPartie) 
+  { // ceci reagit a l'interuption et appel la fonction init
     initPartie = false;   // on remet à false l'initialisation
     init(); // on exécute la fonction init()
   }
-  if (millis() >= times_ms + 20)
-  {
-    mesure_axe_X = analogRead(pin_X_axes);
- /* Serial.println(mesure_axe_X);
-  if (mesure_axe_X > 1024*0.75) Serial.println("++");
-  if (mesure_axe_X < 1024*0.25) Serial.println("--");*/
-
   erreur = angle_random - angle_effectif;
 
   if (abs(erreur) >= 10)
@@ -77,6 +70,14 @@ void loop()
     digitalWrite(pin_RED, 0);
     digitalWrite(pin_BLUE, 0);
   }
+  if (millis() >= times_ms + 20)
+  {
+    angle effectif = mesure_angle_effectif(pin_ANGLE_effectif);
+    mesure_axe_X = analogRead(pin_X_axes);
+    
+ /* Serial.println(mesure_axe_X);
+  if (mesure_axe_X > 1024*0.75) Serial.println("++");
+  if (mesure_axe_X < 1024*0.25) Serial.println("--");*/
 
   switch (lecture_joytick(pin_X_axes, resolution_ADC, mesure_axe_X)) 
   {
@@ -117,11 +118,11 @@ void servoMoteur(int angleServo)//et c'est chiant a faire un interup timer ?
   }
 }
 
-uint8_t lecture_angle(const uint8_t pin_servo_angle)
+uint8_t mesure_angle_effectif(const uint8_t pin_servo_angle)
 {//angle = tension / (fond d'échelle/angle_max) formule par Timothée le goat des maths plus fort que nguyen
   uint16_t val_num = analogRead(pin_servo_angle);
-  float angle_effectif = (val_num * (3.3/val_max))/(val_max/270);
-
+  float angle_effectif = (val_num * (3.3/val_max))/(val_max/angle_max_potentiometre);
+  return angle_effectif;
 }
 uint8_t lecture_joytick(const uint8_t pin, uint8_t resolution, uint8_t mesure)//cette fonction est faite pour lire le joystick et renvoyer une valeur quand le joystick est trop penché (d'un coté comme de l'autre) 
 {
@@ -147,9 +148,9 @@ uint16_t fond_echelle(uint8_t resolution)
 // Fonction pour éteindre toutes les couleurs de la LED
 void allumer_off_LED_PWM() 
 {
-  analogWrite(pin_RED, 255);   // Éteint le rouge (pour anode commune, 255 = éteint)
-  analogWrite(pin_GREEN, 255); // Éteint le vert
-  analogWrite(pin_BLUE, 255);  // Éteint le bleu
+  analogWrite(pin_RED, 0);   // Éteint le rouge (pour anode commune, 255 = éteint)
+  analogWrite(pin_GREEN, 0); // Éteint le vert
+  analogWrite(pin_BLUE, 0);  // Éteint le bleu
 }
 
 // Fonction pour définir la couleur de la LED en fonction d'un état avec PWM
@@ -161,16 +162,16 @@ void commande_LED_PWM(uint8_t etatat)
   {
     case 0: allumer_off_LED_PWM(); break; // LED éteinte
 
-    case 1: analogWrite(pin_RED, 0); break; // Rouge
+    case 1: analogWrite(pin_RED, 255); break; // Rouge
 
-    case 2: analogWrite(pin_RED, 0); analogWrite(pin_GREEN, 127); break; // Orange
+    case 2: analogWrite(pin_RED, 255); analogWrite(pin_GREEN, 127); break; // Orange
 
-    case 3: analogWrite(pin_RED, 0); analogWrite(pin_GREEN, 0); break; // Jaune
+    case 3: analogWrite(pin_RED, 255); analogWrite(pin_GREEN, 0); break; // Jaune
 
-    case 4: analogWrite(pin_GREEN, 0); break; // Vert
+    case 4: analogWrite(pin_GREEN, 255); break; // Vert
 
-    case 5: analogWrite(pin_BLUE, 0); break; // Bleu
+    case 5: analogWrite(pin_BLUE, 255); break; // Bleu
 
-    case 6: analogWrite(pin_RED, 0); analogWrite(pin_GREEN, 0); analogWrite(pin_BLUE, 0); break; // Blanc
+    case 6: analogWrite(pin_RED, 255); analogWrite(pin_GREEN, 255); analogWrite(pin_BLUE, 255); break; // Blanc
   }
 }
