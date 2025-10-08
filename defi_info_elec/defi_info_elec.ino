@@ -146,9 +146,9 @@ uint16_t fond_echelle(uint8_t resolution)
   return fond_sechelle;
 }
 // Fonction pour éteindre toutes les couleurs de la LED
-void allumer_off_LED_PWM() 
+void turn_off_LED_PWM() 
 {
-  analogWrite(pin_RED, 0);   // Éteint le rouge (pour anode commune, 255 = éteint)
+  analogWrite(pin_RED, 0);   // Éteint le rouge (pour anode commune, 0 = éteint)
   analogWrite(pin_GREEN, 0); // Éteint le vert
   analogWrite(pin_BLUE, 0);  // Éteint le bleu
 }
@@ -156,11 +156,11 @@ void allumer_off_LED_PWM()
 // Fonction pour définir la couleur de la LED en fonction d'un état avec PWM
 void commande_LED_PWM(uint8_t etatat)
 {
-  allumer_off_LED_PWM(); // Éteint d'abord toutes les couleurs
+  turn_off_LED_PWM(); // Éteint d'abord toutes les couleurs
 
   switch(etatat)
   {
-    case 0: allumer_off_LED_PWM(); break; // LED éteinte
+    case 0: turn_off_LED_PWM(); break; // LED éteinte
 
     case 1: analogWrite(pin_RED, 255); break; // Rouge
 
