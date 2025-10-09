@@ -1,12 +1,20 @@
 /*
-defi final d'info elec bac 1 ecam
-le projet comprends les 4 éléments de la liste suivant : servo moteur, une led RGB, un joystick et parallélisme(millis)
-il tourne sur arduino uno
-le but est de commander un servo moteur à l'aide du joystick pour que l'angle du servo moteur corresponde à un angle choisit aléatoirement. Une led RGB nous indiques si on se rapproche de l'angle ou pas grâce au code couleur suivant :
--rouge éloigné
--vert rapproché
--bleu gagné
-une fois le servo moteur dans le bon angle pendant un certain temps, le servo se place à 90° (position inital), un nouvel angle est choisit et une nouvelle partie commence. Nous avons modifier le servo moteur en soudant un fil sur le potentiomètre pour connaître l'angle effectif du servomoteur pour comparer non pas la commande du servo mais l'angle réel.
+  ╔══════════════════════════════════════════════╗
+  ║   Défi final d'info-élec – BAC1 ECAM         ║
+  ╚══════════════════════════════════════════════╝
+  Projet : Jeu de contrôle d’un servo moteur via joystick avec feedback LED RGB (ARDUINO UNO)
+  Auteurs : Timothée C. & Gabriel B.
+  Matériel (Modules choisis) : servo, LED RGB, joystick, et millis()
+  Objectif : Faire correspondre l’angle du servo à un angle choisi aléatoirement.
+  Particularité : Lecture de l’angle réel du servo via le potentiomètre. (ce dernier a ete mode pour pouvoir lire la tenison au born du potentiometre)
+  Indication LED RGB :
+    - Rouge -> orange -> jaune : éloigné -> rapproché
+    - Vert : angle trouvé
+    - Bleu : gagné 
+    - Blanc : initialisation
+  Fonctionnement :
+    - Le servo doit être positionné à l’angle aléatoire et maintenu pendant un certain temps.
+    - Une fois l’angle atteint, le servo se repositionne à 90° (position initiale), un nouvel angle est choisi et une nouvelle partie commence.
 */
 
 #include <math.h>
