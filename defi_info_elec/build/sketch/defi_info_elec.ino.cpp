@@ -1,3 +1,5 @@
+#include <Arduino.h>
+#line 1 "/home/timo/code/ECAM/defi-final-ecam_gabriel-timothee/defi_info_elec/defi_info_elec.ino"
 /*
 defi final d'info elec bac 1 ecam
 le projet comprends les 4 éléments de la liste suivant : servo moteur, une led RGB, un joystick et parallélisme(millis)
@@ -32,6 +34,25 @@ pin axe X :
 
 */
 
+#line 35 "/home/timo/code/ECAM/defi-final-ecam_gabriel-timothee/defi_info_elec/defi_info_elec.ino"
+void setup();
+#line 54 "/home/timo/code/ECAM/defi-final-ecam_gabriel-timothee/defi_info_elec/defi_info_elec.ino"
+void loop();
+#line 102 "/home/timo/code/ECAM/defi-final-ecam_gabriel-timothee/defi_info_elec/defi_info_elec.ino"
+void init_p(void);
+#line 111 "/home/timo/code/ECAM/defi-final-ecam_gabriel-timothee/defi_info_elec/defi_info_elec.ino"
+void servoMoteur(int angleServo);
+#line 123 "/home/timo/code/ECAM/defi-final-ecam_gabriel-timothee/defi_info_elec/defi_info_elec.ino"
+uint8_t mesure_angle_effectif(const uint8_t pin_servo_angle);
+#line 129 "/home/timo/code/ECAM/defi-final-ecam_gabriel-timothee/defi_info_elec/defi_info_elec.ino"
+uint8_t lecture_joytick(const uint8_t pin, uint8_t resolution, uint8_t mesure);
+#line 145 "/home/timo/code/ECAM/defi-final-ecam_gabriel-timothee/defi_info_elec/defi_info_elec.ino"
+uint16_t fond_echelle(uint8_t resolution);
+#line 151 "/home/timo/code/ECAM/defi-final-ecam_gabriel-timothee/defi_info_elec/defi_info_elec.ino"
+void turn_off_LED_PWM();
+#line 159 "/home/timo/code/ECAM/defi-final-ecam_gabriel-timothee/defi_info_elec/defi_info_elec.ino"
+void commande_LED_PWM(uint8_t etatat);
+#line 35 "/home/timo/code/ECAM/defi-final-ecam_gabriel-timothee/defi_info_elec/defi_info_elec.ino"
 void setup() 
 {
   Serial.begin(115200);
