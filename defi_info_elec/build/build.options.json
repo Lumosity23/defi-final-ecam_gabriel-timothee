@@ -1,9 +1,0 @@
-{
-  "additionalFiles": "../../..,../../..,../..,../..",
-  "compiler.optimization_flags": "",
-  "customBuildProperties": "",
-  "fqbn": "arduino:avr:uno",
-  "hardwareFolders": "/home/timo/.arduino15/packages",
-  "otherLibrariesFolders": "/home/timo/Documents/Arduino/libraries",
-  "sketchLocation": "/home/timo/code/ECAM/defi-final-ecam_gabriel-timothee/defi_info_elec"
-}
