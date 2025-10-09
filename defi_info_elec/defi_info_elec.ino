@@ -45,8 +45,8 @@ void setup()
 
   Servomoteur1.attach(pin_servo);
   Servomoteur1.write(0);
-  // on devrai ajouter un verification d'availability de la pin d'interuption
-  attachInterrupt(digitalPinToInterrupt(pin_SWITCH), init_p, LOW); // on declenche l'interuption sur le pin du bouton
+  checkInterruptPin(pin_SWITCH); //verification que la pin d'interuption est valide
+  attachInterrupt(digitalPinToInterrupt(pin_SWITCH), init_p, LOW); // on declenche la veille d'interuption sur le pin du bouton
   times_ms = millis();
   uint16_t val_max = fond_echelle(resolution_ADC);
 }
@@ -175,5 +175,16 @@ void commande_LED_PWM(uint8_t etatat)
     case 5: analogWrite(pin_BLUE, 255); break; // Bleu
 
     case 6: analogWrite(pin_RED, 255); analogWrite(pin_GREEN, 255); analogWrite(pin_BLUE, 255); break; // Blanc
+  }
+}
+
+void checkInterruptPin(const uint8_t pin) // verifie que la pin d'interuption est valide si non bloque le programme
+{
+  if (digitalPinToInterrupt(pin) == -1) 
+  {
+    Serial.print("Erreur : ");
+    Serial.print(pin);
+    Serial.println(" n'est pas une pin d'interruption valide sur cette carte.");
+    while (1); delay(1000);// Blocage
   }
 }
