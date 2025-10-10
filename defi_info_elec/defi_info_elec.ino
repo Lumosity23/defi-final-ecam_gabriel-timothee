@@ -19,6 +19,15 @@
 
 #include <math.h>
 #include <Servo.h>
+
+#define eteint 0
+#define rouge 1
+#define orange 2
+#define jaune 3
+#define vert 4
+#define bleu 5
+#define blanc 6
+
 Servo Servomoteur1;
 const uint8_t pin_servo = 9, pin_RED, pin_GREEN, pin_BLUE, pin_SWITCH = A2, pin_Y_axes = A0, pin_X_axes = A1, resolution_ADC = 10, pin_ANGLE_effectif = A3, angle_max_potentiometre = 270;
 
@@ -28,17 +37,8 @@ volatile bool initPartie = false;
 uint16_t mesure_axe_X = 0;
 unsigned long times_ms = 0;
 float angle_effectif;
-uint16_t val_max = 0;
-
-/*
-pin servo : PB1
-pin RED : 
-pin BLUE : 
-pin GREEN :
-pin SWITCH : PC1
-pin axe X :
-
-*/
+uint16_t val_max;
+uint8_t etat_RGB;
 
 void setup() 
 {
@@ -56,7 +56,7 @@ void setup()
   checkInterruptPin(pin_SWITCH); //verification que la pin d'interuption est valide
   attachInterrupt(digitalPinToInterrupt(pin_SWITCH), init_p, LOW); // on declenche la veille d'interuption sur le pin du bouton
   times_ms = millis();
-  uint16_t val_max = fond_echelle(resolution_ADC);
+  val_max = fond_echelle(resolution_ADC);
 }
 
 void loop() 
@@ -68,18 +68,15 @@ void loop()
   }
   erreur = angle_random - angle_effectif;
 
-  if (abs(erreur) >= 10)
+  if (abs(erreur) >= 10)//rouge
   {
-    analogWrite(pin_RED, erreur);
-    digitalWrite(pin_GREEN, 0);
-    digitalWrite(pin_BLUE, 0);
+    etat_RGB = orange;
   } 
-  if (abs(erreur) <= 10)
+  if (abs(erreur) <= 10)//orange
   {
-    analogWrite(pin_GREEN, erreur);
-    digitalWrite(pin_RED, 0);
-    digitalWrite(pin_BLUE, 0);
+    etat_RGB = jaune
   }
+  commande_LED_PWM(etat_RGB);
   if (millis() >= times_ms + 20)
   {
     angle_effectif = mesure_angle_effectif(pin_ANGLE_effectif);
@@ -89,15 +86,14 @@ void loop()
   if (mesure_axe_X > 1024*0.75) Serial.println("++");
   if (mesure_axe_X < 1024*0.25) Serial.println("--");*/
 
-  switch (lecture_joytick(pin_X_axes, resolution_ADC, mesure_axe_X)) 
-  {
-  case 1:Serial.println("++");   break;
-  case 2:Serial.println("--");   break;
-  default: Serial.println("rien");  break;
-  }
+    switch (lecture_joytick(pin_X_axes, resolution_ADC, mesure_axe_X)) 
+      {
+        case 1:Serial.println("++");   break;
+        case 2:Serial.println("--");   break;
+        default: Serial.println("rien");  break;
+      }
 
   }
-  //delay(20);
 }
 
 /* 
