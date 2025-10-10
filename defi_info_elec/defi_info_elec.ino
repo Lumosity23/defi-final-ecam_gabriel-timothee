@@ -193,6 +193,10 @@ void checkInterruptPin(const uint8_t pin) // verifie que la pin d'interuption es
     Serial.print("Erreur : ");
     Serial.print(pin);
     Serial.println(" n'est pas une pin d'interruption valide sur cette carte.");
-    while (1); delay(1000);// Blocage
+    commande_LED_PWM(5); // Bleu pour indiquer une erreur
+    delay(100);
+    commande_LED_PWM(1); // Rouge pour indiquer une erreur
+    delay(100);
+    while (1); delay(800);// Blocage
   }
 }
