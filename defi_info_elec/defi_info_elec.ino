@@ -53,14 +53,24 @@ void setup()
 
   Servomoteur1.attach(pin_servo);
   Servomoteur1.write(0);
-  checkInterruptPin(pin_SWITCH); //verification que la pin d'interuption est valide
-  attachInterrupt(digitalPinToInterrupt(pin_SWITCH), init_p, LOW); // on declenche la veille d'interuption sur le pin du bouton
+  //checkInterruptPin(pin_SWITCH); //verification que la pin d'interuption est valide
+  //attachInterrupt(digitalPinToInterrupt(pin_SWITCH), init_p, LOW); // on declenche la veille d'interuption sur le pin du bouton
   times_ms = millis();
   val_max = fond_echelle(resolution_ADC);
 }
 
 void loop() 
 {
+  for(int i = 0; i <= 180; i++)
+  {
+    int commande_angle = i;
+  Servomoteur1.write(commande_angle);
+  //Serial.println(mesure_angle_effectif(A3));
+  Serial.println(commande_angle-mesure_angle_effectif(A3));
+  delay(200); 
+  }
+  
+  /*
   if (initPartie) 
   { // ceci reagit a l'interuption et appel la fonction init
     initPartie = false;   // on remet à false l'initialisation
@@ -76,24 +86,11 @@ void loop()
   {
     etat_RGB = jaune
   }
-  commande_LED_PWM(etat_RGB);
   if (millis() >= times_ms + 20)
   {
     angle_effectif = mesure_angle_effectif(pin_ANGLE_effectif);
     mesure_axe_X = analogRead(pin_X_axes);
-    
- /* Serial.println(mesure_axe_X);
-  if (mesure_axe_X > 1024*0.75) Serial.println("++");
-  if (mesure_axe_X < 1024*0.25) Serial.println("--");*/
-
-    switch (lecture_joytick(pin_X_axes, resolution_ADC, mesure_axe_X)) 
-      {
-        case 1:Serial.println("++");   break;
-        case 2:Serial.println("--");   break;
-        default: Serial.println("rien");  break;
-      }
-
-  }
+  }*/
 }
 
 /* 
@@ -124,10 +121,10 @@ void servoMoteur(int angleServo)//et c'est chiant a faire un interup timer ?
   }
 }
 
-uint8_t mesure_angle_effectif(const uint8_t pin_servo_angle)
-{//angle = tension / (fond d'échelle/angle_max) formule par Timothée le goat des maths plus fort que nguyen
+uint8_t mesure_angle_effectif(const uint8_t pin_servo_angle)//
+{//angle = (tension / (fond d'échelle/angle_max)) 45 formule par Timothée le goat des maths plus fort que nguyen
   uint16_t val_num = analogRead(pin_servo_angle);
-  float angle_effectif = (val_num * (3.3/val_max))/(val_max/angle_max_potentiometre);
+  float angle_effectif = (val_num * (3.3/val_max))/(3.3/270);
   return angle_effectif;
 }
 uint8_t lecture_joytick(const uint8_t pin, uint8_t resolution, uint8_t mesure)//cette fonction est faite pour lire le joystick et renvoyer une valeur quand le joystick est trop penché (d'un coté comme de l'autre) 
