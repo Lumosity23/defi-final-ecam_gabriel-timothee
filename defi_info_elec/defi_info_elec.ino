@@ -39,6 +39,7 @@ unsigned long times_ms = 0;
 float angle_effectif;
 uint16_t val_max;
 uint8_t etat_RGB;
+uint8_t angle;
 
 void setup() 
 {
@@ -69,13 +70,22 @@ void loop()
   Serial.println(commande_angle-mesure_angle_effectif(A3));
   delay(200); 
   }
+
+  mesure_axe_X = analogRead(pin_X_axes);
+  if (lecture_joytick(pin_X_axes, resolution_ADC, mesure_axe_X))
+  {
+    angle ++;
+  }else if (lecture_joytick(pin_X_axes, resolution_ADC, mesure_axe_X) > 1)
+  {
+    angle --;
+  }
   
-  /*
-  if (initPartie) 
+  
+  /*if (initPartie) 
   { // ceci reagit a l'interuption et appel la fonction init
     initPartie = false;   // on remet à false l'initialisation
     init_p(); // on exécute la fonction init()
-  }
+  }*/
   erreur = angle_random - angle_effectif;
 
   if (abs(erreur) >= 10)//rouge
@@ -90,7 +100,7 @@ void loop()
   {
     angle_effectif = mesure_angle_effectif(pin_ANGLE_effectif);
     mesure_axe_X = analogRead(pin_X_axes);
-  }*/
+  }
 }
 
 /* 
@@ -105,7 +115,6 @@ void init_p(void)
   angle_random = random(181); //generation d'un nombre entre 0 et 180 (0 et max-1)
   Servomoteur1.write(0);
   digitalWrite(pin_GREEN, 1);
-  initPartie = 1;
 }
 
 
