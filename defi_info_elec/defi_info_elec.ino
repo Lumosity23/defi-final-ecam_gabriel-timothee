@@ -29,7 +29,11 @@
 #define blanc 6
 
 Servo Servomoteur1;
-const uint8_t pin_servo = 9, pin_RED, pin_GREEN, pin_BLUE, pin_SWITCH = A2, pin_Y_axes = A0, pin_X_axes = A1, resolution_ADC = 10, pin_ANGLE_effectif = A3, angle_max_potentiometre = 270;
+const uint8_t pin_servo = 9, pin_RED, pin_GREEN, pin_BLUE, pin_Y_axes = A0, pin_X_axes = A1, resolution_ADC = 10, pin_ANGLE_effectif = A3, angle_max_potentiometre = 270;
+
+const uint8_t pin_SWITCH = 2;//ATTENTION cette pin doit être compatible avec un interruption matériel
+bool flag_init_partie = 0;
+bool* pflag_init_partie = &flag_init_partie;
 
 uint8_t erreur = 0;
 uint8_t angle_random;
@@ -39,7 +43,7 @@ unsigned long times_ms = 0;
 float angle_effectif;
 uint16_t val_max;
 uint8_t etat_RGB;
-uint8_t angle;
+uint8_t angle = 0;
 
 void setup() 
 {
@@ -53,22 +57,33 @@ void setup()
   pinMode(pin_RED, OUTPUT);
 
   Servomoteur1.attach(pin_servo);
-  Servomoteur1.write(0);
   //checkInterruptPin(pin_SWITCH); //verification que la pin d'interuption est valide
   //attachInterrupt(digitalPinToInterrupt(pin_SWITCH), init_p, LOW); // on declenche la veille d'interuption sur le pin du bouton
   times_ms = millis();
   val_max = fond_echelle(resolution_ADC);
+  attachInterrupt(pin_SWITCH, ini_partie(), FALLING)
+}
+
+void init_partie(void)
+{
+  *pflag_init_partie = 1;//utilisation d'un pointer car c'est une interruption qui affecte une variable et je veux lire cette variable dans tout mon code donc je la déclare globale mais je veux être sur qu'en tout temps la variable soit "accurate"
 }
 
 void loop() 
 {
+  if (flag_init_partie)
+  {
+    angle_random = random(181); //generation d'un nombre entre 0 et 180 (0 et max-1)
+    Servomoteur1.write(90);
+    
+  }
   for(int i = 0; i <= 180; i++)
   {
     int commande_angle = i;
-  Servomoteur1.write(commande_angle);
-  //Serial.println(mesure_angle_effectif(A3));
-  Serial.println(commande_angle-mesure_angle_effectif(A3));
-  delay(200); 
+    Servomoteur1.write(commande_angle);
+    //Serial.println(mesure_angle_effectif(A3));
+    //Serial.println(commande_angle-mesure_angle_effectif(A3));
+    delay(200); 
   }
 
   mesure_axe_X = analogRead(pin_X_axes);
@@ -79,13 +94,8 @@ void loop()
   {
     angle --;
   }
+  Servomoteur1.write(angle);
   
-  
-  /*if (initPartie) 
-  { // ceci reagit a l'interuption et appel la fonction init
-    initPartie = false;   // on remet à false l'initialisation
-    init_p(); // on exécute la fonction init()
-  }*/
   erreur = angle_random - angle_effectif;
 
   if (abs(erreur) >= 10)//rouge
@@ -94,12 +104,17 @@ void loop()
   } 
   if (abs(erreur) <= 10)//orange
   {
-    etat_RGB = jaune
+    etat_RGB = jaune;
   }
   if (millis() >= times_ms + 20)
   {
     angle_effectif = mesure_angle_effectif(pin_ANGLE_effectif);
     mesure_axe_X = analogRead(pin_X_axes);
+    if (erreur = angle_random + 5 || erreur = angle_random - 5)
+    {
+      etat_RGB = bleu;
+      flag_init_partie = 0;
+    }
   }
 }
 
@@ -108,15 +123,6 @@ la fonction init est la pour demarer un partie, elle est appeler de manier indir
 apres reflection je pense que si on automatise le redemarage de la partie alors on peus simplement fair eun un if bloquant qui permet de lancer la prtie au debut avec le bouton,
 mais il nous faudras quand meme un interupt pour arreter le jeu avec un clic long
 */
-
-
-void init_p(void)
-{
-  angle_random = random(181); //generation d'un nombre entre 0 et 180 (0 et max-1)
-  Servomoteur1.write(0);
-  digitalWrite(pin_GREEN, 1);
-}
-
 
 void servoMoteur(int angleServo)//et c'est chiant a faire un interup timer ?
 {
