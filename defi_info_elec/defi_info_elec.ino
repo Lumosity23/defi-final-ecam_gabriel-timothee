@@ -44,6 +44,7 @@ float angle_effectif;
 uint16_t val_max;
 uint8_t etat_RGB;
 uint8_t angle = 0;
+const uint8_t temps_demarage = 5000;//temps de demarage de 5 sec
 
 void setup() 
 {
@@ -61,7 +62,7 @@ void setup()
   //attachInterrupt(digitalPinToInterrupt(pin_SWITCH), init_p, LOW); // on declenche la veille d'interuption sur le pin du bouton
   times_ms = millis();
   val_max = fond_echelle(resolution_ADC);
-  attachInterrupt(pin_SWITCH, ini_partie(), FALLING)
+  attachInterrupt(digitalPinToInterrupt(pin_SWITCH), init_partie, FALLING);
 }
 
 void init_partie(void)
@@ -74,17 +75,17 @@ void loop()
   if (flag_init_partie)
   {
     angle_random = random(181); //generation d'un nombre entre 0 et 180 (0 et max-1)
-    Servomoteur1.write(90);
-    
+    Servomoteur1.write(90); // mise en place du servo
   }
-  for(int i = 0; i <= 180; i++)
+
+  /*for(int i = 0; i <= 180; i++)
   {
     int commande_angle = i;
     Servomoteur1.write(commande_angle);
     //Serial.println(mesure_angle_effectif(A3));
     //Serial.println(commande_angle-mesure_angle_effectif(A3));
     delay(200); 
-  }
+  }*/
 
   mesure_axe_X = analogRead(pin_X_axes);
   if (lecture_joytick(pin_X_axes, resolution_ADC, mesure_axe_X))
@@ -98,7 +99,7 @@ void loop()
   
   erreur = angle_random - angle_effectif;
 
-  if (abs(erreur) >= 10)//rouge
+  if (abs(erreur) >= 10)//rouge    // c'est quoi abs ??? et c'est normal que les couleurs donner en commentaire ne conincide pas avec celles dans le code ?
   {
     etat_RGB = orange;
   } 
@@ -115,6 +116,11 @@ void loop()
       etat_RGB = bleu;
       flag_init_partie = 0;
     }
+  }
+
+  if (millis() >= temps_demarage || flag_init_partie == 0) //permet un demarage de la partir malgre qu'on ne sache pas cliquer sur le bouton, si pin non adequate ou autre
+  {
+    flag_init_partie = 1;
   }
 }
 
