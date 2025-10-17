@@ -111,14 +111,14 @@ void loop()
   {
     angle_effectif = mesure_angle_effectif(pin_ANGLE_effectif);
     mesure_axe_X = analogRead(pin_X_axes);
-    if (erreur = angle_random + 5 || erreur = angle_random - 5)
+    if (erreur <= angle_random + 5 && erreur >= angle_random - 5) // on verifie que l'angle de notre servo se trouve dans l'interval voulu
     {
       etat_RGB = bleu;
       flag_init_partie = 0;
     }
   }
 
-  if (millis() >= temps_demarage || flag_init_partie == 0) //permet un demarage de la partir malgre qu'on ne sache pas cliquer sur le bouton, si pin non adequate ou autre
+  if (millis() >= temps_demarage && flag_init_partie == 0) //permet un demarage de la partir malgre qu'on ne sache pas cliquer sur le bouton, si pin non adequate ou autre
   {
     flag_init_partie = 1;
   }
