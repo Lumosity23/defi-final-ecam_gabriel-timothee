@@ -32,12 +32,11 @@ Servo Servomoteur1;
 const uint8_t pin_servo = 9, pin_RED, pin_GREEN, pin_BLUE, pin_Y_axes = A0, pin_X_axes = A1, resolution_ADC = 10, pin_ANGLE_effectif = A3, angle_max_potentiometre = 270;
 
 const uint8_t pin_SWITCH = 2;//ATTENTION cette pin doit être compatible avec un interruption matériel
-bool flag_init_partie = 0;
+static volatile bool flag_init_partie = 0;
 bool* pflag_init_partie = &flag_init_partie;
 
 uint8_t erreur = 0;
 uint8_t angle_random;
-volatile bool initPartie = false;
 uint16_t mesure_axe_X = 0;
 unsigned long times_ms = 0;
 float angle_effectif;
@@ -145,7 +144,7 @@ void servoMoteur(int angleServo)//et c'est chiant a faire un interup timer ?
 uint8_t mesure_angle_effectif(const uint8_t pin_servo_angle)//
 {//angle = (tension / (fond d'échelle/angle_max)) 45 formule par Timothée le goat des maths plus fort que nguyen
   uint16_t val_num = analogRead(pin_servo_angle);
-  float angle_effectif = (val_num * (3.3/val_max))/(3.3/270);
+  float angle_effectif = (val_num * (3.3/val_max))/(3.3/angle_max_potentiometre);
   return angle_effectif;
 }
 uint8_t lecture_joytick(const uint8_t pin, uint8_t resolution, uint8_t mesure)//cette fonction est faite pour lire le joystick et renvoyer une valeur quand le joystick est trop penché (d'un coté comme de l'autre) 
@@ -172,9 +171,9 @@ uint16_t fond_echelle(uint8_t resolution)
 // Fonction pour éteindre toutes les couleurs de la LED
 void turn_off_LED_PWM() 
 {
-  analogWrite(pin_RED, 0);   // Éteint le rouge (pour anode commune, 0 = éteint)
-  analogWrite(pin_GREEN, 0); // Éteint le vert
-  analogWrite(pin_BLUE, 0);  // Éteint le bleu
+  digitalWrite(pin_RED, 0);   // Éteint le rouge (pour anode commune, 0 = éteint)
+  digitalWrite(pin_GREEN, 0); // Éteint le vert
+  digitalWrite(pin_BLUE, 0);  // Éteint le bleu
 }
 
 // Fonction pour définir la couleur de la LED en fonction d'un état avec PWM
@@ -186,31 +185,16 @@ void commande_LED_PWM(uint8_t etatat)
   {
     case 0: turn_off_LED_PWM(); break; // LED éteinte
 
-    case 1: analogWrite(pin_RED, 255); break; // Rouge
+    case 1: digitalWrite(pin_RED, 1); break; // Rouge
 
-    case 2: analogWrite(pin_RED, 255); analogWrite(pin_GREEN, 127); break; // Orange
+    case 2: digitalWrite(pin_RED, 1); analogWrite(pin_GREEN, 127); break; // Orange
 
-    case 3: analogWrite(pin_RED, 255); analogWrite(pin_GREEN, 0); break; // Jaune
+    case 3: digitalWrite(pin_RED, 1); analogWrite(pin_GREEN, 0); break; // Jaune
 
-    case 4: analogWrite(pin_GREEN, 255); break; // Vert
+    case 4: digitalWrite(pin_GREEN, 1); break; // Vert
 
-    case 5: analogWrite(pin_BLUE, 255); break; // Bleu
+    case 5: digitalWrite(pin_BLUE, 1); break; // Bleu
 
-    case 6: analogWrite(pin_RED, 255); analogWrite(pin_GREEN, 255); analogWrite(pin_BLUE, 255); break; // Blanc
-  }
-}
-
-void checkInterruptPin(const uint8_t pin) // verifie que la pin d'interuption est valide si non bloque le programme
-{
-  if (digitalPinToInterrupt(pin) == -1) 
-  {
-    Serial.print("Erreur : ");
-    Serial.print(pin);
-    Serial.println(" n'est pas une pin d'interruption valide sur cette carte.");
-    commande_LED_PWM(5); // Bleu pour indiquer une erreur
-    delay(100);
-    commande_LED_PWM(1); // Rouge pour indiquer une erreur
-    delay(100);
-    while (1); delay(800);// Blocage
+    case 6: digitalWrite(pin_RED, 1); gitialWrite(pin_GREEN, 1); digitalWrite(pin_BLUE, 1); break; // Blanc
   }
 }
