@@ -31,7 +31,7 @@
 #define blanc 6
 
 Servo Servomoteur1;
-const uint8_t pin_servo = 9, pin_RED = 9, pin_GREEN = 11, pin_BLUE = 6, pin_X_axes = A1, resolution_ADC = 10, pin_ANGLE_effectif = A3, angle_max_potentiometre = 270;
+const uint8_t pin_servo = 9, pin_RED = 10, pin_GREEN = 11, pin_BLUE = 6, pin_X_axes = A1, resolution_ADC = 10, pin_ANGLE_effectif = A3, angle_max_potentiometre = 270;
 
 const uint8_t pin_SWITCH = 2;//ATTENTION cette pin doit être compatible avec un interruption matériel
 static volatile bool flag_init_partie = 0;
@@ -62,10 +62,10 @@ void setup()
   //checkInterruptPin(pin_SWITCH); //verification que la pin d'interuption est valide
   //attachInterrupt(digitalPinToInterrupt(pin_SWITCH), init_p, LOW); // on declenche la veille d'interuption sur le pin du bouton
   times_ms = millis();
-  val_max = fond_echelle(resolution_ADC);
-  attachInterrupt(digitalPinToInterrupt(pin_SWITCH), init_partie, FALLING);
+  //val_max = fond_echelle(resolution_ADC);
+  //attachInterrupt(digitalPinToInterrupt(pin_SWITCH), init_partie, FALLING);
   Servomoteur1.write(90);
-  delay(5000);
+  delay(2000);
   /*uint32_t delay_de_depart = 4000000;
   while(delay_de_depart>0)
   {
@@ -74,32 +74,19 @@ void setup()
   Serial.println("DEMARRAGE EFFECTUE AVEC SUCCES");
 }
 
-void init_partie(void)
-{
-  *pflag_init_partie = 1;//utilisation d'un pointer car c'est une interruption qui affecte une variable et je veux lire cette variable dans tout mon code donc je la déclare globale mais je veux être sur qu'en tout temps la variable soit "accurate"
-}
-
-int borne(int borne_sup, int borne_inf, int valeur_bornee)
-{
-  if (valeur_bornee >= borne_sup)
-  {
-    return borne_sup;
-  } else if (valeur_bornee <= borne_inf)
-  {
-    return borne_inf;
-  } else return valeur_bornee;
-}
 void loop() //
 {
     mesure_axe_X = analogRead(pin_X_axes);
   if (millis() >= times_ms+10)
   {
     times_ms = millis();
-    if (mesure_axe_X >= 1000) angle++;
+    if (mesure_axe_X >= 800) angle++;
     if (mesure_axe_X <= 300) angle --;
     angle_effectif = mesure_angle_effectif(pin_ANGLE_effectif);
-    borne(181,0,angle);
-    Serial.println(angle);
+    angle = borne(180,1,angle);
+    //Serial.print(angle);
+    //Serial.print("    ");
+    Serial.println(angle_effectif);
   }
   Servomoteur1.write(angle);
   
@@ -113,11 +100,6 @@ void loop() //
     etat_RGB = jaune;
   }
   commande_LED_PWM(etat_RGB);
-
-  /*if (millis() >= temps_demarage && flag_init_partie == 0) //permet un demarage de la partir malgre qu'on ne sache pas cliquer sur le bouton, si pin non adequate ou autre
-  {
-    flag_init_partie = 1;
-  }*/
 }
 
 /* 
@@ -125,6 +107,7 @@ la fonction init est la pour demarer un partie, elle est appeler de manier indir
 apres reflection je pense que si on automatise le redemarage de la partie alors on peus simplement fair eun un if bloquant qui permet de lancer la prtie au debut avec le bouton,
 mais il nous faudras quand meme un interupt pour arreter le jeu avec un clic long
 */
+
 
 void servoMoteur(int angleServo)//et c'est chiant a faire un interup timer ?
 {
@@ -144,6 +127,7 @@ uint8_t mesure_angle_effectif(const uint8_t pin_servo_angle)//
   float angle_effectif = (val_num * (3.3/val_max))/(3.3/angle_max_potentiometre);
   return angle_effectif;
 }
+
 uint8_t lecture_joytick(const uint8_t pin, uint8_t resolution, uint8_t mesure)//cette fonction est faite pour lire le joystick et renvoyer une valeur quand le joystick est trop penché (d'un coté comme de l'autre) 
 {
   uint8_t limite_sup, limite_inf;
@@ -164,6 +148,7 @@ uint16_t fond_echelle(uint8_t resolution)
   double fond_sechelle = pow(2,resolution);
   return fond_sechelle;
 }
+
 // Fonction pour éteindre toutes les couleurs de la LED
 void turn_off_LED_PWM() 
 {
@@ -185,7 +170,7 @@ void commande_LED_PWM(uint8_t etatat)
 
     case 2: digitalWrite(pin_RED, 1); analogWrite(pin_GREEN, 127); break; // Orange
 
-    case 3: digitalWrite(pin_RED, 1); analogWrite(pin_GREEN, 0); break; // Jaune
+    case 3: digitalWrite(pin_RED, 1); digitalWrite(pin_GREEN, 0); break; // Jaune
 
     case 4: digitalWrite(pin_GREEN, 1); break; // Vert
 
@@ -193,4 +178,20 @@ void commande_LED_PWM(uint8_t etatat)
 
     case 6: digitalWrite(pin_RED, 1); digitalWrite(pin_GREEN, 1); digitalWrite(pin_BLUE, 1); break; // Blanc
   }
+}
+
+void init_partie(void)
+{
+  *pflag_init_partie = 1;//utilisation d'un pointer car c'est une interruption qui affecte une variable et je veux lire cette variable dans tout mon code donc je la déclare globale mais je veux être sur qu'en tout temps la variable soit "accurate"
+}
+
+int borne(int borne_sup, int borne_inf, int valeur_bornee)
+{
+  if (valeur_bornee >= borne_sup)
+  {
+    return borne_sup;
+  } else if (valeur_bornee <= borne_inf)
+  {
+    return borne_inf;
+  } else return valeur_bornee;
 }
