@@ -95,7 +95,7 @@ void loop() //
   if (millis() >= times_ms+10)
   {
     times_ms = millis();
-    if (mesure_axe_X >= 700) angle++;
+    if (mesure_axe_X >= 1000) angle++;
     if (mesure_axe_X <= 300) angle --;
     angle_effectif = mesure_angle_effectif(pin_ANGLE_effectif);
     borne(181,0,angle);
