@@ -41,6 +41,7 @@ uint8_t erreur = 0;
 long angle_random = 0;
 uint16_t mesure_axe_X = 0;
 unsigned long times_ms = 0;
+unsigned long time_to_win = 0;
 float angle_effectif = 0;
 uint16_t val_max = 0;
 uint8_t etat_RGB = 0;
@@ -64,6 +65,7 @@ void setup()
   //checkInterruptPin(pin_SWITCH); //verification que la pin d'interuption est valide
   //attachInterrupt(digitalPinToInterrupt(pin_SWITCH), init_p, LOW); // on declenche la veille d'interuption sur le pin du bouton
   times_ms = millis();
+  time_to_win = millis();
   //val_max = fond_echelle(resolution_ADC);
   //attachInterrupt(digitalPinToInterrupt(pin_SWITCH), init_partie, FALLING);
   Servomoteur1.write(90);
@@ -106,11 +108,13 @@ void loop() //
   {
     etat_RGB = rouge;
   }
-  commande_LED_PWM(etat_RGB);
-  if (flag_angle_trouve && millis() >= times_ms+2000)
+  if (flag_angle_trouve && millis() >= time_to_win+2000)
   {
+    time_to_win = millis();
+    etat_RGB = bleu;
     flag_partie_finie = 1;
   }
+  commande_LED_PWM(etat_RGB);
 }
 
 /* 
