@@ -38,7 +38,7 @@ static volatile bool flag_init_partie = 0;
 bool* pflag_init_partie = &flag_init_partie;
 
 uint8_t erreur = 0;
-uint8_t angle_random = 0;
+long angle_random = 0;
 uint16_t mesure_axe_X = 0;
 unsigned long times_ms = 0;
 float angle_effectif = 0;
@@ -46,6 +46,8 @@ uint16_t val_max = 0;
 uint8_t etat_RGB = 0;
 uint8_t angle = 0;
 const uint8_t temps_demarage = 5000;//temps de demarage de 5 sec
+bool flag_angle_trouve = 0;
+bool flag_partie_finie = 0;
 
 void setup() 
 {
@@ -72,11 +74,13 @@ void setup()
     delay_de_depart--;
   }*/
   Serial.println("DEMARRAGE EFFECTUE AVEC SUCCES");
+  angle_random = random(1, 180);
 }
 
 void loop() //
 {
-    mesure_axe_X = analogRead(pin_X_axes);
+  erreur = abs((angle_random - angle));
+  mesure_axe_X = analogRead(pin_X_axes);
   if (millis() >= times_ms+10)
   {
     times_ms = millis();
@@ -84,22 +88,29 @@ void loop() //
     if (mesure_axe_X <= 300) angle --;
     angle_effectif = mesure_angle_effectif(pin_ANGLE_effectif);
     angle = borne(180,1,angle);
-    //Serial.print(angle);
-    //Serial.print("    ");
-    Serial.println(angle_effectif);
+    Serial.print(angle);
+    Serial.print("-->");
+    Serial.println(erreur);
+    //Serial.println(angle_effectif);
   }
   Servomoteur1.write(angle);
   
-  erreur = angle_random - angle_effectif;
-  if (abs(erreur) >= 10)//rouge
+  if (erreur < 10)
   {
-    etat_RGB = orange;
-  } 
-  if (abs(erreur) <= 10)//orange
+    etat_RGB = vert;
+    flag_angle_trouve = 1;
+  } else if (erreur < 40 && erreur >= 10)
   {
     etat_RGB = jaune;
+  } else if (erreur >= 40)
+  {
+    etat_RGB = rouge;
   }
   commande_LED_PWM(etat_RGB);
+  if (flag_angle_trouve && millis() >= times_ms+2000)
+  {
+    flag_partie_finie = 1;
+  }
 }
 
 /* 
@@ -170,7 +181,7 @@ void commande_LED_PWM(uint8_t etatat)
 
     case 2: digitalWrite(pin_RED, 1); analogWrite(pin_GREEN, 127); break; // Orange
 
-    case 3: digitalWrite(pin_RED, 1); digitalWrite(pin_GREEN, 0); break; // Jaune
+    case 3: digitalWrite(pin_RED, 1); digitalWrite(pin_GREEN, 1); break; // Jaune
 
     case 4: digitalWrite(pin_GREEN, 1); break; // Vert
 
