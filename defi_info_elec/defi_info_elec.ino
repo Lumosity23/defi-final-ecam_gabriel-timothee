@@ -4,9 +4,9 @@
   ╚══════════════════════════════════════════════╝
   Projet : Jeu de contrôle d’un servo moteur via joystick avec feedback LED RGB (ARDUINO UNO)
   Auteurs : Timothée C. & Gabriel B.
-  Matériel (Modules choisis) : servo, LED RGB, joystick, et millis()
+  Matériel (Modules choisis) : servo, LED RGB, joystick, et moniteur série
   Objectif : Faire correspondre l’angle du servo à un angle choisi aléatoirement.
-  Particularité : Lecture de l’angle réel du servo via le potentiomètre. (ce dernier a ete mode pour pouvoir lire la tenison au born du potentiometre)
+  Particularité : Lecture de l’angle réel du servo via le potentiomètre car c'est un peu nul de déterminer si l'angle à été atteint uniquement via la commande (ce dernier a ete mode pour pouvoir lire la tenison aux bornes du potentiometre)
   Indication LED RGB :
     - Rouge -> orange -> jaune : éloigné -> rapproché
     - Vert : angle trouvé
@@ -15,6 +15,8 @@
   Fonctionnement :
     - Le servo doit être positionné à l’angle aléatoire et maintenu pendant un certain temps.
     - Une fois l’angle atteint, le servo se repositionne à 90° (position initiale), un nouvel angle est choisi et une nouvelle partie commence.
+  Contrainte : 
+    -Ne pas utiliser de delay car c'est une foncion bloquante, c'est à dire qu'elle bloque le µC et que c'est une fonction qui cache d'autre fonction, et si plus tard par exemple je désactive les interruptions elle ne fonctionne plus, elle est donc cause de panne, et il est difficile à diagnostiquer
 */
 
 #include <math.h>
@@ -29,28 +31,28 @@
 #define blanc 6
 
 Servo Servomoteur1;
-const uint8_t pin_servo = 9, pin_RED, pin_GREEN, pin_BLUE, pin_Y_axes = A0, pin_X_axes = A1, resolution_ADC = 10, pin_ANGLE_effectif = A3, angle_max_potentiometre = 270;
+const uint8_t pin_servo = 9, pin_RED = 9, pin_GREEN = 11, pin_BLUE = 6, pin_X_axes = A1, resolution_ADC = 10, pin_ANGLE_effectif = A3, angle_max_potentiometre = 270;
 
 const uint8_t pin_SWITCH = 2;//ATTENTION cette pin doit être compatible avec un interruption matériel
 static volatile bool flag_init_partie = 0;
 bool* pflag_init_partie = &flag_init_partie;
 
 uint8_t erreur = 0;
-uint8_t angle_random;
+uint8_t angle_random = 0;
 uint16_t mesure_axe_X = 0;
 unsigned long times_ms = 0;
-float angle_effectif;
-uint16_t val_max;
-uint8_t etat_RGB;
+float angle_effectif = 0;
+uint16_t val_max = 0;
+uint8_t etat_RGB = 0;
 uint8_t angle = 0;
 const uint8_t temps_demarage = 5000;//temps de demarage de 5 sec
 
 void setup() 
 {
-  Serial.begin(115200);
+  Serial.begin(9600);
+  Serial.println("DEBUT DEMARRAGE");
   pinMode(pin_SWITCH, INPUT);
   pinMode(pin_X_axes, INPUT);
-  pinMode(pin_Y_axes, INPUT);
 
   pinMode(pin_BLUE, OUTPUT);
   pinMode(pin_GREEN, OUTPUT);
@@ -62,6 +64,14 @@ void setup()
   times_ms = millis();
   val_max = fond_echelle(resolution_ADC);
   attachInterrupt(digitalPinToInterrupt(pin_SWITCH), init_partie, FALLING);
+  Servomoteur1.write(90);
+  delay(5000);
+  /*uint32_t delay_de_depart = 4000000;
+  while(delay_de_depart>0)
+  {
+    delay_de_depart--;
+  }*/
+  Serial.println("DEMARRAGE EFFECTUE AVEC SUCCES");
 }
 
 void init_partie(void)
@@ -69,36 +79,32 @@ void init_partie(void)
   *pflag_init_partie = 1;//utilisation d'un pointer car c'est une interruption qui affecte une variable et je veux lire cette variable dans tout mon code donc je la déclare globale mais je veux être sur qu'en tout temps la variable soit "accurate"
 }
 
-void loop() 
+int borne(int borne_sup, int borne_inf, int valeur_bornee)
 {
-  if (flag_init_partie)
+  if (valeur_bornee >= borne_sup)
   {
-    angle_random = random(181); //generation d'un nombre entre 0 et 180 (0 et max-1)
-    Servomoteur1.write(90); // mise en place du servo
-  }
-
-  /*for(int i = 0; i <= 180; i++)
+    return borne_sup;
+  } else if (valeur_bornee <= borne_inf)
   {
-    int commande_angle = i;
-    Servomoteur1.write(commande_angle);
-    //Serial.println(mesure_angle_effectif(A3));
-    //Serial.println(commande_angle-mesure_angle_effectif(A3));
-    delay(200); 
-  }*/
-
-  mesure_axe_X = analogRead(pin_X_axes);
-  if (lecture_joytick(pin_X_axes, resolution_ADC, mesure_axe_X))
+    return borne_inf;
+  } else return valeur_bornee;
+}
+void loop() //
+{
+    mesure_axe_X = analogRead(pin_X_axes);
+  if (millis() >= times_ms+10)
   {
-    angle ++;
-  }else if (lecture_joytick(pin_X_axes, resolution_ADC, mesure_axe_X) > 1)
-  {
-    angle --;
+    times_ms = millis();
+    if (mesure_axe_X >= 700) angle++;
+    if (mesure_axe_X <= 300) angle --;
+    angle_effectif = mesure_angle_effectif(pin_ANGLE_effectif);
+    borne(181,0,angle);
+    Serial.println(angle);
   }
   Servomoteur1.write(angle);
   
   erreur = angle_random - angle_effectif;
-
-  if (abs(erreur) >= 10)//rouge    // c'est quoi abs ??? et c'est normal que les couleurs donner en commentaire ne conincide pas avec celles dans le code ?
+  if (abs(erreur) >= 10)//rouge
   {
     etat_RGB = orange;
   } 
@@ -106,21 +112,12 @@ void loop()
   {
     etat_RGB = jaune;
   }
-  if (millis() >= times_ms + 20)
-  {
-    angle_effectif = mesure_angle_effectif(pin_ANGLE_effectif);
-    mesure_axe_X = analogRead(pin_X_axes);
-    if (erreur <= angle_random + 5 && erreur >= angle_random - 5) // on verifie que l'angle de notre servo se trouve dans l'interval voulu
-    {
-      etat_RGB = bleu;
-      flag_init_partie = 0;
-    }
-  }
+  commande_LED_PWM(etat_RGB);
 
-  if (millis() >= temps_demarage && flag_init_partie == 0) //permet un demarage de la partir malgre qu'on ne sache pas cliquer sur le bouton, si pin non adequate ou autre
+  /*if (millis() >= temps_demarage && flag_init_partie == 0) //permet un demarage de la partir malgre qu'on ne sache pas cliquer sur le bouton, si pin non adequate ou autre
   {
     flag_init_partie = 1;
-  }
+  }*/
 }
 
 /* 
@@ -162,7 +159,6 @@ uint8_t lecture_joytick(const uint8_t pin, uint8_t resolution, uint8_t mesure)//
   return 0;
 }
 
-
 uint16_t fond_echelle(uint8_t resolution)
 {
   double fond_sechelle = pow(2,resolution);
@@ -195,6 +191,6 @@ void commande_LED_PWM(uint8_t etatat)
 
     case 5: digitalWrite(pin_BLUE, 1); break; // Bleu
 
-    case 6: digitalWrite(pin_RED, 1); gitialWrite(pin_GREEN, 1); digitalWrite(pin_BLUE, 1); break; // Blanc
+    case 6: digitalWrite(pin_RED, 1); digitalWrite(pin_GREEN, 1); digitalWrite(pin_BLUE, 1); break; // Blanc
   }
 }
