@@ -31,7 +31,9 @@
 #define blanc 6
 
 Servo Servomoteur1;
-const uint8_t pin_servo = 9, pin_RED = 10, pin_GREEN = 11, pin_BLUE = 6, pin_X_axes = A1, resolution_ADC = 10, pin_ANGLE_effectif = A3, angle_max_potentiometre = 270;
+const uint8_t pin_servo = 9, pin_RED = 10, pin_GREEN = 11, pin_BLUE = 6, pin_X_axes = A1, resolution_ADC = 10, pin_ANGLE_effectif = A3;
+
+float angle_max_potentiometre = 270.0;
 
 const uint8_t pin_SWITCH = 2;//ATTENTION cette pin doit être compatible avec un interruption matériel
 static volatile bool flag_init_partie = 0;
@@ -160,7 +162,7 @@ uint8_t lecture_joytick(const uint8_t pin, uint8_t resolution, uint8_t mesure)//
 
 uint16_t fond_echelle(uint8_t resolution)
 {
-  double fond_sechelle = pow(2,resolution);
+  double fond_sechelle = pow(2,resolution)-1;
   return fond_sechelle;
 }
 
