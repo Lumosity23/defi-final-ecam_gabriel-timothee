@@ -68,7 +68,7 @@ void setup()
   //attachInterrupt(digitalPinToInterrupt(pin_SWITCH), init_p, LOW); // on declenche la veille d'interuption sur le pin du bouton
   times_ms = millis();
   time_to_win = millis();
-  //val_max = fond_echelle(resolution_ADC);
+  val_max = fond_echelle(resolution_ADC);
   //attachInterrupt(digitalPinToInterrupt(pin_SWITCH), init_partie, FALLING);
   Servomoteur1.write(90);
   delay(2000);
@@ -94,8 +94,8 @@ void loop() //
     angle = borne(180,1,angle);
     Serial.print(angle);
     Serial.print("-->");
-    Serial.println(erreur);
-    //Serial.println(angle_effectif);
+    //Serial.println(erreur);
+    Serial.println(angle_effectif);
   }
   Servomoteur1.write(angle);
   
