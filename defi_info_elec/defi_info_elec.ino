@@ -74,7 +74,7 @@ void loop()
   if (flag_init_partie)
   {
     angle_random = random(181); //generation d'un nombre entre 0 et 180 (0 et max-1)
-    Servomoteur1.write(90); // mise en place du servo
+    //Servomoteur1.write(90); // mise en place du servo
   }
 
   /*for(int i = 0; i <= 180; i++)
@@ -87,14 +87,14 @@ void loop()
   }*/
 
   mesure_axe_X = analogRead(pin_X_axes);
-  if (lecture_joytick(pin_X_axes, resolution_ADC, mesure_axe_X))
+  if (lecture_joytick(pin_X_axes, resolution_ADC, mesure_axe_X) == 1)
   {
     angle ++;
-  }else if (lecture_joytick(pin_X_axes, resolution_ADC, mesure_axe_X) > 1)
+  }else if (lecture_joytick(pin_X_axes, resolution_ADC, mesure_axe_X) == 2)
   {
     angle --;
   }
-  Servomoteur1.write(angle);
+  delay(100); // Delay for 100 milliseconds
   
   erreur = angle_random - angle_effectif;
 
@@ -108,19 +108,24 @@ void loop()
   }
   if (millis() >= times_ms + 20)
   {
+    
+    Servomoteur1.write(angle);
+    Serial.println(angle);
+    Serial.println(mesure_axe_X);
     angle_effectif = mesure_angle_effectif(pin_ANGLE_effectif);
     mesure_axe_X = analogRead(pin_X_axes);
     if (erreur <= angle_random + 5 && erreur >= angle_random - 5) // on verifie que l'angle de notre servo se trouve dans l'interval voulu
+    
     {
       etat_RGB = bleu;
       flag_init_partie = 0;
     }
   }
 
-  if (millis() >= temps_demarage && flag_init_partie == 0) //permet un demarage de la partir malgre qu'on ne sache pas cliquer sur le bouton, si pin non adequate ou autre
+  /*if (millis() >= temps_demarage && flag_init_partie == 0) //permet un demarage de la partir malgre qu'on ne sache pas cliquer sur le bouton, si pin non adequate ou autre
   {
     flag_init_partie = 1;
-  }
+  }*/
 }
 
 /* 
@@ -150,12 +155,12 @@ uint8_t mesure_angle_effectif(const uint8_t pin_servo_angle)//
 uint8_t lecture_joytick(const uint8_t pin, uint8_t resolution, uint8_t mesure)//cette fonction est faite pour lire le joystick et renvoyer une valeur quand le joystick est trop penché (d'un coté comme de l'autre) 
 {
   uint8_t limite_sup, limite_inf;
-  limite_sup = 0.75 * val_max;
-  limite_inf = 0.25 * val_max;
-  if (mesure >= limite_sup)
+  limite_sup = 767;//0.75 * val_max;
+  limite_inf = 255;//0.25 * val_max;
+  if (mesure > limite_sup)
   {
     return 1;
-  } else if (mesure <= limite_inf)
+  } else if (mesure < limite_inf)
   {
     return 2;
   }
@@ -195,6 +200,6 @@ void commande_LED_PWM(uint8_t etatat)
 
     case 5: digitalWrite(pin_BLUE, 1); break; // Bleu
 
-    case 6: digitalWrite(pin_RED, 1); gitialWrite(pin_GREEN, 1); digitalWrite(pin_BLUE, 1); break; // Blanc
+    case 6: digitalWrite(pin_RED, 1); digitalWrite(pin_GREEN, 1); digitalWrite(pin_BLUE, 1); break; // Blanc
   }
 }
