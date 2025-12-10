@@ -83,26 +83,30 @@ void setup()
 
 void loop() //
 {
-  while (flag_partie_finie == 0 && flag_init_partie == 0)
+  erreur = abs((angle_random - angle));
+  mesure_axe_X = analogRead(pin_X_axes);
+  if (millis() >= times_ms+10)
   {
-    erreur = abs((angle_random - angle));
-    mesure_axe_X = analogRead(pin_X_axes);
-    if (millis() >= times_ms+10)
+    times_ms = millis();
+    if (lecture_joytick(val_max, mesure_axe_X)==1)
     {
-      times_ms = millis();
-      if (mesure_axe_X >= 800) angle++;
-      if (mesure_axe_X <= 300) angle --;
-      angle_effectif = mesure_angle_effectif(pin_ANGLE_effectif);
-      angle = borne(180,1,angle);
-      Serial.print("votre angle ");
-      Serial.println(angle);
-      Serial.print("-----------------");
-      Serial.print("votre erreur ");
-      Serial.println(erreur);
-      Serial.println("-----------------");
-      //Serial.println(angle_effectif);
+      angle++;
+    } else if (lecture_joytick(val_max, mesure_axe_X)<1)
+    {
+      angle--;
     }
-    Servomoteur1.write(angle);
+    /*lecture_joytick(val_max, mesure_axe_X);
+    if (mesure_axe_X >= 800) angle++;
+    if (mesure_axe_X <= 300) angle --;*/
+    angle_effectif = mesure_angle_effectif(pin_ANGLE_effectif);
+    angle = borne(180,1,angle);
+    Serial.println(mesure_axe_X);
+    //Serial.print(angle);
+    //Serial.print("-->");
+    //Serial.println(erreur);
+    //Serial.println(angle_effectif);
+  }
+  Servomoteur1.write(angle);
   
     if (erreur < 10)
     {
@@ -174,11 +178,11 @@ uint8_t mesure_angle_effectif(const uint8_t pin_servo_angle)//
   return angle_effectif;
 }
 
-uint8_t lecture_joytick(const uint8_t pin, uint8_t resolution, uint8_t mesure)//cette fonction est faite pour lire le joystick et renvoyer une valeur quand le joystick est trop penché (d'un coté comme de l'autre) 
+uint8_t lecture_joytick(uint16_t resolution, uint16_t mesure)//cette fonction est faite pour lire le joystick et renvoyer une valeur quand le joystick est trop penché (d'un coté comme de l'autre) 
 {
-  uint8_t limite_sup, limite_inf;
-  limite_sup = 0.75 * val_max;
-  limite_inf = 0.25 * val_max;
+  uint16_t limite_sup, limite_inf;
+  limite_sup = (resolution/4)*3;
+  limite_inf = resolution/4;
   if (mesure >= limite_sup)
   {
     return 1;
@@ -191,7 +195,7 @@ uint8_t lecture_joytick(const uint8_t pin, uint8_t resolution, uint8_t mesure)//
 
 uint16_t fond_echelle(uint8_t resolution)
 {
-  double fond_sechelle = pow(2,resolution)-1;
+  double fond_sechelle = (pow(2,resolution))-1;
   return fond_sechelle;
 }
 
