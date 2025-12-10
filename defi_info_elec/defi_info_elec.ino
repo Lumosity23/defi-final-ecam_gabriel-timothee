@@ -31,7 +31,7 @@
 #define blanc 6
 
 Servo Servomoteur1;
-const uint8_t pin_servo = 9, pin_RED = 10, pin_GREEN = 11, pin_BLUE = 6, pin_X_axes = A1, resolution_ADC = 10, pin_ANGLE_effectif = A3;
+const uint8_t pin_servo = 9, pin_RED = 5, pin_GREEN = 6, pin_BLUE = 7, pin_X_axes = A0, resolution_ADC = 10, pin_ANGLE_effectif = A1;
 
 float angle_max_potentiometre = 270.0;
 
@@ -69,7 +69,7 @@ void setup()
   times_ms = millis();
   time_to_win = millis();
   val_max = fond_echelle(resolution_ADC);
-  //attachInterrupt(digitalPinToInterrupt(pin_SWITCH), init_partie, FALLING);
+  attachInterrupt(digitalPinToInterrupt(pin_SWITCH), init_partie, FALLING);
   Servomoteur1.write(90);
   delay(2000);
   /*uint32_t delay_de_depart = 4000000;
@@ -78,45 +78,74 @@ void setup()
     delay_de_depart--;
   }*/
   Serial.println("DEMARRAGE EFFECTUE AVEC SUCCES");
-  angle_random = random(1, 180);
+  
 }
 
 void loop() //
 {
-  erreur = abs((angle_random - angle));
-  mesure_axe_X = analogRead(pin_X_axes);
-  if (millis() >= times_ms+10)
+  while (flag_partie_finie == 0 && flag_init_partie == 0)
   {
-    times_ms = millis();
-    if (mesure_axe_X >= 800) angle++;
-    if (mesure_axe_X <= 300) angle --;
-    angle_effectif = mesure_angle_effectif(pin_ANGLE_effectif);
-    angle = borne(180,1,angle);
-    Serial.print(angle);
-    Serial.print("-->");
-    //Serial.println(erreur);
-    Serial.println(angle_effectif);
-  }
-  Servomoteur1.write(angle);
+    erreur = abs((angle_random - angle));
+    mesure_axe_X = analogRead(pin_X_axes);
+    if (millis() >= times_ms+10)
+    {
+      times_ms = millis();
+      if (mesure_axe_X >= 800) angle++;
+      if (mesure_axe_X <= 300) angle --;
+      angle_effectif = mesure_angle_effectif(pin_ANGLE_effectif);
+      angle = borne(180,1,angle);
+      Serial.print("votre angle ");
+      Serial.println(angle);
+      Serial.print("-----------------");
+      Serial.print("votre erreur ");
+      Serial.println(erreur);
+      Serial.println("-----------------");
+      //Serial.println(angle_effectif);
+    }
+    Servomoteur1.write(angle);
   
-  if (erreur < 10)
-  {
-    etat_RGB = vert;
-    flag_angle_trouve = 1;
-  } else if (erreur < 40 && erreur >= 10)
-  {
-    etat_RGB = jaune;
-  } else if (erreur >= 40)
-  {
-    etat_RGB = rouge;
+    if (erreur < 10)
+    {
+      etat_RGB = vert;
+      flag_angle_trouve = 1;
+      Serial.println("angle trouvé");
+    } else if (erreur < 40 && erreur >= 10)
+    {
+      etat_RGB = jaune;
+      flag_angle_trouve = 0;
+    } else if (erreur >= 40)
+    {
+      etat_RGB = rouge;
+      flag_angle_trouve = 0;
+    }
+    if (flag_angle_trouve && millis() >= time_to_win+2000)
+    {
+      time_to_win = millis();
+      etat_RGB = bleu;
+      flag_partie_finie = 1;
+    }
+    commande_LED_PWM(etat_RGB);
   }
-  if (flag_angle_trouve && millis() >= time_to_win+2000)
+  
+  if(pin_SWITCH == 1)
   {
-    time_to_win = millis();
-    etat_RGB = bleu;
-    flag_partie_finie = 1;
+  new_partie();
+  etat_RGB = blanc
+  comande_LED_PWM(etat_RGB);
+  Serial.println("debut dans.....");
+  Serial.println("5");
+  delay(1000);
+  Serial.println("4");
+  delay(1000);
+  Serial.println("3");
+  delay(1000);
+  Serial.println("2");
+  delay(1000);
+  Serial.println("1");
+  delay(1000);
+  Serial.println("GOOOOO");
   }
-  commande_LED_PWM(etat_RGB);
+  delay(20); // a voir comment on fais pour la suite 
 }
 
 /* 
@@ -148,12 +177,12 @@ uint8_t mesure_angle_effectif(const uint8_t pin_servo_angle)//
 uint8_t lecture_joytick(const uint8_t pin, uint8_t resolution, uint8_t mesure)//cette fonction est faite pour lire le joystick et renvoyer une valeur quand le joystick est trop penché (d'un coté comme de l'autre) 
 {
   uint8_t limite_sup, limite_inf;
-  limite_sup = 767;//0.75 * val_max;
-  limite_inf = 255;//0.25 * val_max;
-  if (mesure > limite_sup)
+  limite_sup = 0.75 * val_max;
+  limite_inf = 0.25 * val_max;
+  if (mesure >= limite_sup)
   {
     return 1;
-  } else if (mesure < limite_inf)
+  } else if (mesure <= limite_inf)
   {
     return 2;
   }
@@ -180,7 +209,7 @@ void commande_LED_PWM(uint8_t etatat)
   turn_off_LED_PWM(); // Éteint d'abord toutes les couleurs
 
   switch(etatat)
-  {
+  { 
     case 0: turn_off_LED_PWM(); break; // LED éteinte
 
     case 1: digitalWrite(pin_RED, 1); break; // Rouge
@@ -193,7 +222,6 @@ void commande_LED_PWM(uint8_t etatat)
 
     case 5: digitalWrite(pin_BLUE, 1); break; // Bleu
 
-    case 6: digitalWrite(pin_RED, 1); digitalWrite(pin_GREEN, 1); digitalWrite(pin_BLUE, 1); break; // Blanc
     case 6: digitalWrite(pin_RED, 1); digitalWrite(pin_GREEN, 1); digitalWrite(pin_BLUE, 1); break; // Blanc
   }
 }
@@ -212,4 +240,12 @@ int borne(int borne_sup, int borne_inf, int valeur_bornee)
   {
     return borne_inf;
   } else return valeur_bornee;
+}
+
+void new_partie()
+{
+  *pflag_init_partie = 0;
+    Serial.println("-----------DEBUT DE PARTIE-----------");
+    angle_random = random(0, 181);
+  flag_partie_finie = 0;
 }
