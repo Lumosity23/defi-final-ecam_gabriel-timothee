@@ -83,6 +83,8 @@ void setup()
 
 void loop() //
 {
+  while (flag_partie_finie == 0 && flag_init_partie == 0)
+  {
   erreur = abs((angle_random - angle));
   mesure_axe_X = analogRead(pin_X_axes);
   if (millis() >= times_ms+10)
@@ -101,9 +103,12 @@ void loop() //
     angle_effectif = mesure_angle_effectif(pin_ANGLE_effectif);
     angle = borne(180,1,angle);
     Serial.println(mesure_axe_X);
-    //Serial.print(angle);
-    //Serial.print("-->");
-    //Serial.println(erreur);
+    Serial.print("votre angle ");
+    Serial.println(angle);
+    Serial.print("-----------------");
+    Serial.print("votre erreur ");
+    Serial.println(erreur);
+    Serial.println("-----------------");
     //Serial.println(angle_effectif);
   }
   Servomoteur1.write(angle);
@@ -131,7 +136,7 @@ void loop() //
     commande_LED_PWM(etat_RGB);
   }
   
-  if(pin_SWITCH == 1)
+  if(pin_SWITCH == 1) // ici on devra changer car c'est pas un solution foncotinnelle
   {
   new_partie();
   etat_RGB = blanc
