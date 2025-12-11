@@ -31,7 +31,7 @@
 #define blanc 6
 
 Servo Servomoteur1;
-const uint8_t pin_servo = 9, pin_RED = 5, pin_GREEN = 6, pin_BLUE = 7, pin_X_axes = A0, resolution_ADC = 10, pin_ANGLE_effectif = A1;
+const uint8_t pin_servo = 9, pin_RED = 10, pin_GREEN = 11, pin_BLUE = 6, pin_X_axes = A1, resolution_ADC = 10, pin_ANGLE_effectif = A3  ;
 
 float angle_max_potentiometre = 270.0;
 
@@ -136,11 +136,11 @@ void loop() //
     commande_LED_PWM(etat_RGB);
   }
   
-  if(pin_SWITCH == 1) // ici on devra changer car c'est pas un solution foncotinnelle
+  if(pin_SWITCH == 1) // ici on devra changer car c'est pas un solution fonctinnelle
   {
   new_partie();
-  etat_RGB = blanc
-  comande_LED_PWM(etat_RGB);
+  etat_RGB = blanc;
+  commande_LED_PWM(etat_RGB);
   Serial.println("debut dans.....");
   Serial.println("5");
   delay(1000);
