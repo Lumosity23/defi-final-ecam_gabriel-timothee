@@ -18,7 +18,7 @@
   Contrainte : 
     -Ne pas utiliser de delay car c'est une foncion bloquante, c'est à dire qu'elle bloque le µC et que c'est une fonction qui cache d'autre fonction, et si plus tard par exemple je désactive les interruptions elle ne fonctionne plus, elle est donc cause de panne, et il est difficile à diagnostiquer
 */
-
+//tej interrupt, pointer, test bouton dans le while, corriger angle effectif
 #include <math.h>
 #include <Servo.h>
 
@@ -72,11 +72,6 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(pin_SWITCH), init_partie, FALLING);
   Servomoteur1.write(90);
   delay(2000);
-  /*uint32_t delay_de_depart = 4000000;
-  while(delay_de_depart>0)
-  {
-    delay_de_depart--;
-  }*/
   Serial.println("DEMARRAGE EFFECTUE AVEC SUCCES");
   
 }
