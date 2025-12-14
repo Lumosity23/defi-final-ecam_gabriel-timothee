@@ -4,6 +4,7 @@
   ╚══════════════════════════════════════════════╝
   Projet : Jeu de contrôle d’un servo moteur via joystick avec feedback LED RGB (ARDUINO UNO)
   Auteurs : Timothée C. & Gabriel B.
+  Hardware : 2 led RGB, diffuseur limineux, condensateur pour éviter les rebonds du bouton du joystick, joystick avec bouton, arduino uno, servomoteur, 3 résistances, 3 transistors, du papier alu, boitier, 
   Matériel (Modules choisis) : servo, LED RGB, joystick, et moniteur série
   Objectif : Faire correspondre l’angle du servo à un angle choisi aléatoirement.
   Particularité : Lecture de l’angle réel du servo via le potentiomètre car c'est un peu nul de déterminer si l'angle à été atteint uniquement via la commande (ce dernier a ete mode pour pouvoir lire la tenison aux bornes du potentiometre)
@@ -31,13 +32,11 @@
 #define blanc 6
 
 Servo Servomoteur1;
-const uint8_t pin_servo = 9, pin_RED = 10, pin_GREEN = 11, pin_BLUE = 6, pin_X_axes = A1, resolution_ADC = 10, pin_ANGLE_effectif = A3  ;
+const uint8_t pin_servo = 9, pin_RED = 10, pin_GREEN = 11, pin_BLUE = 6, pin_X_axes = A1, resolution_ADC = 10, pin_ANGLE_effectif = A2;
 
 float angle_max_potentiometre = 270.0;
 
 const uint8_t pin_SWITCH = 2;//ATTENTION cette pin doit être compatible avec un interruption matériel
-static volatile bool flag_init_partie = 0;
-bool* pflag_init_partie = &flag_init_partie;
 
 uint8_t erreur = 0;
 long angle_random = 0;
@@ -51,12 +50,14 @@ uint8_t angle = 0;
 const uint8_t temps_demarage = 5000;//temps de demarage de 5 sec
 bool flag_angle_trouve = 0;
 bool flag_partie_finie = 0;
+bool flag_init_partie = 0;
+bool state_switch = 0;
 
 void setup() 
 {
   Serial.begin(9600);
   Serial.println("DEBUT DEMARRAGE");
-  pinMode(pin_SWITCH, INPUT);
+  pinMode(pin_SWITCH, INPUT_PULLUP);
   pinMode(pin_X_axes, INPUT);
 
   pinMode(pin_BLUE, OUTPUT);
@@ -65,21 +66,23 @@ void setup()
 
   Servomoteur1.attach(pin_servo);
   //checkInterruptPin(pin_SWITCH); //verification que la pin d'interuption est valide
-  //attachInterrupt(digitalPinToInterrupt(pin_SWITCH), init_p, LOW); // on declenche la veille d'interuption sur le pin du bouton
+  //attachInterrupt(digitalPinToInterrupt(pin_SWITCH), init_p, LOW); // on declenche la veille d'interuption sur le pin du boutonx  
   times_ms = millis();
   time_to_win = millis();
   val_max = fond_echelle(resolution_ADC);
-  attachInterrupt(digitalPinToInterrupt(pin_SWITCH), init_partie, FALLING);
-  Servomoteur1.write(90);
   delay(2000);
   Serial.println("DEMARRAGE EFFECTUE AVEC SUCCES");
   
 }
 
-void loop() //
+void loop() 
 {
-  while (flag_partie_finie == 0 && flag_init_partie == 0)
-  {
+    state_switch = !digitalRead(pin_SWITCH);
+    if (state_switch)
+    {
+      new_partie();
+    }
+
   erreur = abs((angle_random - angle));
   mesure_axe_X = analogRead(pin_X_axes);
   if (millis() >= times_ms+10)
@@ -106,14 +109,15 @@ void loop() //
     Serial.println("-----------------");
     //Serial.println(angle_effectif);
   }
+  
   Servomoteur1.write(angle);
   
-    if (erreur < 10)
+    if (erreur < 3)
     {
       etat_RGB = vert;
       flag_angle_trouve = 1;
       Serial.println("angle trouvé");
-    } else if (erreur < 40 && erreur >= 10)
+    } else if (erreur < 40 && erreur >= 3)
     {
       etat_RGB = jaune;
       flag_angle_trouve = 0;
@@ -129,27 +133,9 @@ void loop() //
       flag_partie_finie = 1;
     }
     commande_LED_PWM(etat_RGB);
-  }
   
-  if(pin_SWITCH == 1) // ici on devra changer car c'est pas un solution fonctinnelle
-  {
-  new_partie();
-  etat_RGB = blanc;
-  commande_LED_PWM(etat_RGB);
-  Serial.println("debut dans.....");
-  Serial.println("5");
-  delay(1000);
-  Serial.println("4");
-  delay(1000);
-  Serial.println("3");
-  delay(1000);
-  Serial.println("2");
-  delay(1000);
-  Serial.println("1");
-  delay(1000);
-  Serial.println("GOOOOO");
-  }
-  delay(20); // a voir comment on fais pour la suite 
+  
+
 }
 
 /* 
@@ -159,17 +145,6 @@ mais il nous faudras quand meme un interupt pour arreter le jeu avec un clic lon
 */
 
 
-void servoMoteur(int angleServo)//et c'est chiant a faire un interup timer ?
-{
-  uint32_t times_ms;
-  uint32_t temps;
-  times_ms = millis();
-  temps = ((angleServo/180)+1);  // convertir l'anger recu en un temps en "ms" pour faire touner le servo
-  if (millis >= times_ms + temps){  // repeter tout les 20ms
-    digitalWrite(pin_servo, 1);
-    times_ms = millis();
-  }
-}
 
 uint8_t mesure_angle_effectif(const uint8_t pin_servo_angle)//
 {//angle = (tension / (fond d'échelle/angle_max)) 45 formule par Timothée le goat des maths plus fort que nguyen
@@ -230,10 +205,6 @@ void commande_LED_PWM(uint8_t etatat)
   }
 }
 
-void init_partie(void)
-{
-  *pflag_init_partie = 1;//utilisation d'un pointer car c'est une interruption qui affecte une variable et je veux lire cette variable dans tout mon code donc je la déclare globale mais je veux être sur qu'en tout temps la variable soit "accurate"
-}
 
 int borne(int borne_sup, int borne_inf, int valeur_bornee)
 {
@@ -248,7 +219,21 @@ int borne(int borne_sup, int borne_inf, int valeur_bornee)
 
 void new_partie()
 {
-  *pflag_init_partie = 0;
+  Servomoteur1.write(90);
+  etat_RGB = blanc;
+  commande_LED_PWM(etat_RGB);
+  Serial.println("debut dans.....");
+  Serial.println("5");
+  delay(1000);
+  Serial.println("4");
+  delay(1000);
+  Serial.println("3");
+  delay(1000);
+  Serial.println("2");
+  delay(1000);
+  Serial.println("1");
+  delay(1000);
+  Serial.println("GOOOOO");
     Serial.println("-----------DEBUT DE PARTIE-----------");
     angle_random = random(0, 181);
   flag_partie_finie = 0;
