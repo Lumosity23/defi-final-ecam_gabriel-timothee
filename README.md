@@ -25,7 +25,7 @@ Le joueur n'a pas d'indication visuelle directe de la cible, mais doit se fier �
 
 Voici le montage réalisé sous KiCad :
 
-![Schéma du circuit](Screenshot%20from%2025-12-14%2018-02-44.png)
+![Schéma du circuit](/defi_info_elec/Screenshot%20from%2025-12-14%2018-02-44.png)
 
 ### Liste du Matériel
 
