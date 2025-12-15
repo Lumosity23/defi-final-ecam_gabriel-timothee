@@ -32,11 +32,9 @@
 #define blanc 6
 
 Servo Servomoteur1;
-const uint8_t pin_servo = 9, pin_RED = 10, pin_GREEN = 11, pin_BLUE = 6, pin_X_axes = A1, resolution_ADC = 10, pin_ANGLE_effectif = A2;
+const uint8_t pin_servo = 9, pin_RED = 5, pin_GREEN = 3, pin_BLUE = 6, pin_X_axes = A1, resolution_ADC = 10, pin_ANGLE_effectif = A2,pin_SWITCH = 4;
 
 float angle_max_potentiometre = 270.0;
-
-const uint8_t pin_SWITCH = 2;//ATTENTION cette pin doit être compatible avec un interruption matériel
 
 uint8_t erreur = 0;
 long angle_random = 0;
@@ -52,6 +50,7 @@ bool flag_angle_trouve = 0;
 bool flag_partie_finie = 0;
 bool flag_init_partie = 0;
 bool state_switch = 0;
+uint16_t limite_sup = 0, limite_inf = 0;
 
 void setup() 
 {
@@ -65,18 +64,21 @@ void setup()
   pinMode(pin_RED, OUTPUT);
 
   Servomoteur1.attach(pin_servo);
-  //checkInterruptPin(pin_SWITCH); //verification que la pin d'interuption est valide
-  //attachInterrupt(digitalPinToInterrupt(pin_SWITCH), init_p, LOW); // on declenche la veille d'interuption sur le pin du boutonx  
+
+  val_max = fond_echelle(resolution_ADC);
   times_ms = millis();
   time_to_win = millis();
-  val_max = fond_echelle(resolution_ADC);
+
   delay(2000);
   Serial.println("DEMARRAGE EFFECTUE AVEC SUCCES");
+  angle_random = random(0, 181);
   
 }
 
 void loop() 
 {
+  limite_sup = (val_max/4)*3;
+  limite_inf = val_max/4;
     state_switch = !digitalRead(pin_SWITCH);
     if (state_switch)
     {
@@ -88,26 +90,18 @@ void loop()
   if (millis() >= times_ms+10)
   {
     times_ms = millis();
-    if (lecture_joytick(val_max, mesure_axe_X)==1)
-    {
-      angle++;
-    } else if (lecture_joytick(val_max, mesure_axe_X)<1)
-    {
-      angle--;
-    }
-    /*lecture_joytick(val_max, mesure_axe_X);
-    if (mesure_axe_X >= 800) angle++;
-    if (mesure_axe_X <= 300) angle --;*/
+    if (mesure_axe_X <= limite_inf) angle--;
+    if (mesure_axe_X >= limite_sup) angle++;
+
     angle_effectif = mesure_angle_effectif(pin_ANGLE_effectif);
     angle = borne(180,1,angle);
     Serial.println(mesure_axe_X);
-    Serial.print("votre angle ");
-    Serial.println(angle);
-    Serial.print("-----------------");
-    Serial.print("votre erreur ");
-    Serial.println(erreur);
-    Serial.println("-----------------");
-    //Serial.println(angle_effectif);
+    Serial.print("angle = ");
+    Serial.print(angle);
+    Serial.print("    erreur = ");
+    Serial.print(erreur);
+    Serial.print("    effectif = ");
+    Serial.println(angle_effectif);
   }
   
   Servomoteur1.write(angle);
@@ -116,7 +110,7 @@ void loop()
     {
       etat_RGB = vert;
       flag_angle_trouve = 1;
-      Serial.println("angle trouvé");
+      //Serial.println("angle trouvé");
     } else if (erreur < 40 && erreur >= 3)
     {
       etat_RGB = jaune;
@@ -151,21 +145,6 @@ uint8_t mesure_angle_effectif(const uint8_t pin_servo_angle)//
   uint16_t val_num = analogRead(pin_servo_angle);
   float angle_effectif = (val_num * (3.3/val_max))/(3.3/angle_max_potentiometre);
   return angle_effectif;
-}
-
-uint8_t lecture_joytick(uint16_t resolution, uint16_t mesure)//cette fonction est faite pour lire le joystick et renvoyer une valeur quand le joystick est trop penché (d'un coté comme de l'autre) 
-{
-  uint16_t limite_sup, limite_inf;
-  limite_sup = (resolution/4)*3;
-  limite_inf = resolution/4;
-  if (mesure >= limite_sup)
-  {
-    return 1;
-  } else if (mesure <= limite_inf)
-  {
-    return 2;
-  }
-  return 0;
 }
 
 uint16_t fond_echelle(uint8_t resolution)
