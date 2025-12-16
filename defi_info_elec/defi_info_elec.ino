@@ -23,6 +23,17 @@
 #include <math.h>
 #include <Servo.h>
 
+#include <SPI.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <Servo.h>
+
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+#define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
+#define SCREEN_ADDRESS 0x3C
+
 #define eteint 0
 #define rouge 1
 #define orange 2
@@ -31,10 +42,14 @@
 #define bleu 5
 #define blanc 6
 
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET); 
+
 Servo Servomoteur1;
 const uint8_t pin_servo = 10, pin_RED = 5, pin_GREEN = 3, pin_BLUE = 6, pin_X_axes = A1, resolution_ADC = 10, pin_ANGLE_effectif = A2,pin_SWITCH = 4;
 
 float angle_max_potentiometre = 270.0;
+
+unsigned long start_time;
 
 uint8_t erreur = 0;
 long angle_random = 0;
@@ -59,6 +74,14 @@ void setup()
 {
   Serial.begin(9600);
   Serial.println("DEBUT DEMARRAGE");
+
+  start_time = millis();
+
+  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) 
+  {
+  Serial.println(F("SSD1306 allocation failed"));
+  }
+
   pinMode(pin_SWITCH, INPUT_PULLUP);
   pinMode(pin_X_axes, INPUT);
 
@@ -81,11 +104,27 @@ void setup()
 void loop() 
 {
   
-    state_switch = !digitalRead(pin_SWITCH);
-    if (state_switch)
-    {
-      new_partie();
-    }
+  unsigned long time_ms = millis() - start_time;
+  unsigned long secondes = time_ms / 1000;
+  unsigned long centieme = (time_ms % 1000) / 10;
+
+  state_switch = !digitalRead(pin_SWITCH);
+  if (state_switch)
+  {
+    new_partie();
+  }
+
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+  display.setCursor(0, 28);
+  display.print("time : ");
+  display.print(secondes);
+  display.print(".");
+  if (centieme < 10) display.print("0");
+  display.println(centieme);
+  display.display();
+  display.clearDisplay();
 
   erreur = abs((angle_random - angle));
   mesure_axe_X = analogRead(pin_X_axes);
@@ -120,25 +159,32 @@ void loop()
         etat_partiePrecendent = etat_partieActuel;
       }
       //Serial.println("angle trouvé");
-    } else if (erreur < 40 && erreur >= 3)
+    } else if (erreur < 20 && erreur >= 3)
     {
       etat_RGB = jaune;
       flag_angle_trouve = 0;
       flag_partie_finie = 0;
-    } else if (erreur >= 40)
+      time_to_win = 0;
+    } else if (erreur < 40 && erreur >= 20)
+    {
+      etat_RGB = orange;
+      flag_angle_trouve = 0;
+      flag_partie_finie = 0;
+      time_to_win = 0;
+    }
+    else if (erreur >= 40)
     {
       etat_RGB = rouge;
       flag_angle_trouve = 0;
       flag_partie_finie = 0;
+      time_to_win = 0;
     }
+    
     if (flag_angle_trouve && millis() >= time_to_win+2000)
     {
       //time_to_win = millis();
       etat_partieActuel = 1;
       etat_partiePrecendent = 0;
-      etat_RGB = bleu;
-      commande_LED_PWM(etat_RGB);
-      delay(1000);
       flag_partie_finie = 1;
       if (millis()>=time_to_win+1000)
       {
@@ -192,9 +238,9 @@ void commande_LED_PWM(uint8_t etatat)
 
     case 1: digitalWrite(pin_RED, 1); break; // Rouge
 
-    case 2: digitalWrite(pin_RED, 1); analogWrite(pin_GREEN, 127); break; // Orange
+    case 2: digitalWrite(pin_RED, 1); analogWrite(pin_GREEN, 10); break; //Orange
 
-    case 3: digitalWrite(pin_RED, 1); digitalWrite(pin_GREEN, 1); break; // Jaune
+    case 3: analogWrite(pin_RED, 180); analogWrite(pin_GREEN, 30); break; // Jaune
 
     case 4: digitalWrite(pin_GREEN, 1); break; // Vert
 
@@ -219,9 +265,13 @@ int borne(int borne_sup, int borne_inf, int valeur_bornee)
 void new_partie()
 {
   angle = 90;
+  etat_RGB = bleu;
+  commande_LED_PWM(etat_RGB);
+  delay(2000);
   Servomoteur1.write(angle);
   etat_RGB = blanc;
   commande_LED_PWM(etat_RGB);
+
   /*Serial.println("debut dans.....");
   Serial.println("5");
   delay(1000);
