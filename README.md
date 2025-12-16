@@ -1,6 +1,6 @@
 # 🎛️ Défi Final Info-Élec : Jeu du Servomoteur "Chaud-Froid"
 
-Projet réalisé par **Timothée C.** & **Gabriel B.** dans le cadre du cours d'informatique-électronique (BAC1 ECAM).
+Projet réalisé par **Timothée C.** & **Gabriel B.** & **Martin W.** dans le cadre du cours d'informatique-électronique (BAC1 ECAM).
 
 ## 🎯 Objectif du Jeu
 
