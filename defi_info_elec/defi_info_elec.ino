@@ -98,6 +98,7 @@ void setup()
   delay(500);
   Serial.println("DEMARRAGE EFFECTUE AVEC SUCCES");
   angle_random = random(0, 181);
+  display.clearDisplay();
   
 }
 
@@ -114,7 +115,6 @@ void loop()
     new_partie();
   }
 
-  display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(WHITE);
   display.setCursor(0, 28);
@@ -123,8 +123,7 @@ void loop()
   display.print(".");
   if (centieme < 10) display.print("0");
   display.println(centieme);
-  display.display();
-  display.clearDisplay();
+  refresh();
 
   erreur = abs((angle_random - angle));
   mesure_axe_X = analogRead(pin_X_axes);
@@ -272,19 +271,48 @@ void new_partie()
   etat_RGB = blanc;
   commande_LED_PWM(etat_RGB);
 
-  /*Serial.println("debut dans.....");
-  Serial.println("5");
+  display.setTextSize(3);
+  display.setTextColor(WHITE);
+
+  display.setCursor(35, 10);
+  display.println("NEW");
+  display.setCursor(25, 35);
+  display.print("GAME");
+  refresh();
   delay(1000);
-  Serial.println("4");
+
+  display.setCursor(55, 20);
+  display.print("5");
+  refresh();
   delay(1000);
-  Serial.println("3");
+  display.setCursor(55, 20);
+  display.print("4");
+  refresh();
   delay(1000);
-  Serial.println("2");
+  display.setCursor(55, 20);
+  display.print("3");
+  refresh();
   delay(1000);
-  Serial.println("1");*/
+  display.setCursor(55, 20);
+  display.print("2");
+  refresh();
   delay(1000);
-  Serial.println("GOOOOO");
+  display.setCursor(55, 20);
+  display.print("1");
+  refresh();
+  delay(1000);
+  display.setCursor(45, 20);
+  display.print("GO!");
+  refresh();
+  delay(500);
     Serial.println("-----------DEBUT DE PARTIE-----------");
     angle_random = random(0, 181);
   flag_partie_finie = 0;
+  start_time = millis();
+}
+
+void refresh(void)
+{
+  display.display();
+  display.clearDisplay();
 }
