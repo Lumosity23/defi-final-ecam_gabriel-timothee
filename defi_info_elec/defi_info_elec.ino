@@ -32,7 +32,7 @@
 #define blanc 6
 
 Servo Servomoteur1;
-const uint8_t pin_servo = 9, pin_RED = 5, pin_GREEN = 3, pin_BLUE = 6, pin_X_axes = A1, resolution_ADC = 10, pin_ANGLE_effectif = A2,pin_SWITCH = 4;
+const uint8_t pin_servo = 10, pin_RED = 5, pin_GREEN = 3, pin_BLUE = 6, pin_X_axes = A1, resolution_ADC = 10, pin_ANGLE_effectif = A2,pin_SWITCH = 4;
 
 float angle_max_potentiometre = 270.0;
 
@@ -44,13 +44,16 @@ unsigned long time_to_win = 0;
 float angle_effectif = 0;
 uint16_t val_max = 0;
 uint8_t etat_RGB = 0;
-uint8_t angle = 0;
+uint8_t angle = 90;
 const uint8_t temps_demarage = 5000;//temps de demarage de 5 sec
 bool flag_angle_trouve = 0;
 bool flag_partie_finie = 0;
 bool flag_init_partie = 0;
 bool state_switch = 0;
 uint16_t limite_sup = 0, limite_inf = 0;
+
+byte etat_partieActuel = 1;
+byte etat_partiePrecendent = 0;
 
 void setup() 
 {
@@ -69,7 +72,7 @@ void setup()
   times_ms = millis();
   time_to_win = millis();
 
-  delay(2000);
+  delay(500);
   Serial.println("DEMARRAGE EFFECTUE AVEC SUCCES");
   angle_random = random(0, 181);
   
@@ -77,8 +80,7 @@ void setup()
 
 void loop() 
 {
-  limite_sup = (val_max/4)*3;
-  limite_inf = val_max/4;
+  
     state_switch = !digitalRead(pin_SWITCH);
     if (state_switch)
     {
@@ -87,8 +89,10 @@ void loop()
 
   erreur = abs((angle_random - angle));
   mesure_axe_X = analogRead(pin_X_axes);
-  if (millis() >= times_ms+10)
+  if (millis() >= times_ms+100)
   {
+    limite_sup = (val_max/4)*3;
+  limite_inf = val_max/4;
     times_ms = millis();
     if (mesure_axe_X <= limite_inf) angle--;
     if (mesure_axe_X >= limite_sup) angle++;
@@ -106,25 +110,41 @@ void loop()
   
   Servomoteur1.write(angle);
   
-    if (erreur < 3)
+    if (erreur < 3 && flag_partie_finie == 0)
     {
       etat_RGB = vert;
       flag_angle_trouve = 1;
+      if (etat_partieActuel != etat_partiePrecendent)
+      {
+        time_to_win = millis();
+        etat_partiePrecendent = etat_partieActuel;
+      }
       //Serial.println("angle trouvé");
     } else if (erreur < 40 && erreur >= 3)
     {
       etat_RGB = jaune;
       flag_angle_trouve = 0;
+      flag_partie_finie = 0;
     } else if (erreur >= 40)
     {
       etat_RGB = rouge;
       flag_angle_trouve = 0;
+      flag_partie_finie = 0;
     }
     if (flag_angle_trouve && millis() >= time_to_win+2000)
     {
-      time_to_win = millis();
+      //time_to_win = millis();
+      etat_partieActuel = 1;
+      etat_partiePrecendent = 0;
       etat_RGB = bleu;
+      commande_LED_PWM(etat_RGB);
+      delay(1000);
       flag_partie_finie = 1;
+      if (millis()>=time_to_win+1000)
+      {
+        new_partie();
+      } 
+
     }
     commande_LED_PWM(etat_RGB);
   
@@ -198,10 +218,11 @@ int borne(int borne_sup, int borne_inf, int valeur_bornee)
 
 void new_partie()
 {
-  Servomoteur1.write(90);
+  angle = 90;
+  Servomoteur1.write(angle);
   etat_RGB = blanc;
   commande_LED_PWM(etat_RGB);
-  Serial.println("debut dans.....");
+  /*Serial.println("debut dans.....");
   Serial.println("5");
   delay(1000);
   Serial.println("4");
@@ -210,7 +231,7 @@ void new_partie()
   delay(1000);
   Serial.println("2");
   delay(1000);
-  Serial.println("1");
+  Serial.println("1");*/
   delay(1000);
   Serial.println("GOOOOO");
     Serial.println("-----------DEBUT DE PARTIE-----------");
